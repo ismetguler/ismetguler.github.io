@@ -1,0 +1,32 @@
+<svg viewBox="0 0 1200 750" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#10122a"/><stop offset="1" stop-color="#0a1f2e"/></linearGradient>
+<linearGradient id="ac" x1="0" y1="0" x2="1" y2="0">
+<stop offset="0" stop-color="#6f5bff"/><stop offset="1" stop-color="#19d3da"/></linearGradient>
+</defs>
+<rect width="1200" height="750" fill="url(#bg)"/>
+<circle cx="980" cy="120" r="220" fill="#6f5bff" opacity="0.18"/>
+<circle cx="220" cy="640" r="200" fill="#19d3da" opacity="0.14"/>
+<text x="80" y="150" fill="#fff" font-size="62" font-weight="800">Ticaret Camı</text>
+<text x="82" y="205" fill="#9fb0d0" font-size="30">B2B marketplace · sold &amp; delivered · 5.0★</text>
+<g transform="translate(80,250)">
+<rect width="170" height="60" rx="14" fill="url(#ac)"/><text x="85" y="39" fill="#06070d" font-size="24" font-weight="700" text-anchor="middle">Flutter</text>
+<rect x="190" width="180" height="60" rx="14" fill="none" stroke="#2a3a5a" stroke-width="2"/><text x="280" y="39" fill="#cdd7ee" font-size="24" text-anchor="middle">Firebase</text>
+<rect x="390" width="150" height="60" rx="14" fill="none" stroke="#2a3a5a" stroke-width="2"/><text x="465" y="39" fill="#cdd7ee" font-size="24" text-anchor="middle">Maps</text>
+</g>
+<!-- phone -->
+<g transform="translate(760,210)">
+<rect width="320" height="500" rx="40" fill="#0c1020" stroke="#2a3a5a" stroke-width="3"/>
+<rect x="16" y="16" width="288" height="468" rx="28" fill="#121a30"/>
+<rect x="120" y="30" width="80" height="14" rx="7" fill="#0c1020"/>
+<text x="40" y="90" fill="#fff" font-size="22" font-weight="700">Kayseri esnafı</text>
+<g transform="translate(40,110)">
+<rect width="110" height="120" rx="14" fill="#1b2440"/><circle cx="55" cy="45" r="26" fill="url(#ac)"/><rect x="20" y="86" width="70" height="10" rx="5" fill="#2c3a5e"/><rect x="20" y="102" width="46" height="8" rx="4" fill="#243152"/>
+<rect x="128" width="110" height="120" rx="14" fill="#1b2440"/><circle cx="183" cy="45" r="26" fill="#ff5b9e" opacity="0.8"/><rect x="148" y="86" width="70" height="10" rx="5" fill="#2c3a5e"/><rect x="148" y="102" width="46" height="8" rx="4" fill="#243152"/>
+<rect y="134" width="110" height="120" rx="14" fill="#1b2440"/><circle cx="55" cy="179" r="26" fill="#19d3da" opacity="0.8"/><rect x="20" y="220" width="70" height="10" rx="5" fill="#2c3a5e"/><rect x="20" y="236" width="46" height="8" rx="4" fill="#243152"/>
+<rect x="128" y="134" width="110" height="120" rx="14" fill="#1b2440"/><circle cx="183" cy="179" r="26" fill="#6f5bff" opacity="0.85"/><rect x="148" y="220" width="70" height="10" rx="5" fill="#2c3a5e"/><rect x="148" y="236" width="46" height="8" rx="4" fill="#243152"/>
+</g>
+<g transform="translate(40,388)"><rect width="240" height="56" rx="16" fill="url(#ac)"/><text x="120" y="36" fill="#06070d" font-size="22" font-weight="700" text-anchor="middle">📍 Haritada gör</text></g>
+</g>
+</svg>
