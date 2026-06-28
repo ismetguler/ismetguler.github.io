@@ -1,0 +1,36 @@
+<svg viewBox="0 0 1200 750" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+<defs>
+<linearGradient id="bg6" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a1226"/><stop offset="1" stop-color="#0c1a2a"/></linearGradient>
+<linearGradient id="ac6" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6f5bff"/><stop offset="1" stop-color="#19d3da"/></linearGradient>
+</defs>
+<rect width="1200" height="750" fill="url(#bg6)"/>
+<circle cx="980" cy="600" r="220" fill="#6f5bff" opacity="0.13"/>
+<text x="80" y="140" fill="#fff" font-size="56" font-weight="800">Notification API</text>
+<text x="82" y="190" fill="#9fb0d0" font-size="29">Backend service · Erciyes Univ. (BAUM)</text>
+<g transform="translate(80,228)">
+<rect width="190" height="56" rx="14" fill="url(#ac6)"/><text x="95" y="37" fill="#06070d" font-size="22" font-weight="700" text-anchor="middle">JavaScript</text>
+<rect x="210" width="140" height="56" rx="14" fill="none" stroke="#2a3a5a" stroke-width="2"/><text x="280" y="37" fill="#cdd7ee" font-size="22" text-anchor="middle">REST API</text>
+</g>
+<!-- bell -->
+<g transform="translate(150,360)">
+<path d="M120 40 Q60 40 60 120 L60 170 L40 200 L200 200 L180 170 L180 120 Q180 40 120 40 Z" fill="url(#ac6)"/>
+<circle cx="120" cy="30" r="14" fill="#19d3da"/>
+<path d="M100 200 Q120 230 140 200 Z" fill="#19d3da"/>
+<circle cx="180" cy="60" r="26" fill="#ff5b9e"/><text x="180" y="70" fill="#fff" font-size="28" font-weight="800" text-anchor="middle">3</text>
+</g>
+<!-- json / nodes -->
+<g transform="translate(560,290)">
+<rect width="540" height="340" rx="20" fill="#0b1322" stroke="#22304d" stroke-width="2"/>
+<rect x="0" y="0" width="540" height="50" rx="20" fill="#13203c"/>
+<circle cx="30" cy="25" r="7" fill="#ff5b9e"/><circle cx="56" cy="25" r="7" fill="#ffd47a"/><circle cx="82" cy="25" r="7" fill="#19d3da"/>
+<text x="120" y="32" fill="#5e7099" font-size="18">POST /api/notify</text>
+<g font-family="Consolas,monospace" font-size="22">
+<text x="30" y="100" fill="#5e7099">{</text>
+<text x="60" y="135" fill="#19d3da">"to"</text><text x="120" y="135" fill="#cdd7ee">: </text><text x="145" y="135" fill="#ffd47a">"all-users"</text><text x="290" y="135" fill="#cdd7ee">,</text>
+<text x="60" y="170" fill="#19d3da">"title"</text><text x="150" y="170" fill="#cdd7ee">: </text><text x="175" y="170" fill="#ffd47a">"Duyuru"</text><text x="290" y="170" fill="#cdd7ee">,</text>
+<text x="60" y="205" fill="#19d3da">"status"</text><text x="165" y="205" fill="#cdd7ee">: </text><text x="190" y="205" fill="#7CFFB2">"sent ✓"</text>
+<text x="30" y="240" fill="#5e7099">}</text>
+</g>
+<rect x="30" y="270" width="200" height="44" rx="12" fill="url(#ac6)"/><text x="130" y="299" fill="#06070d" font-size="20" font-weight="700" text-anchor="middle">200 OK</text>
+</g>
+</svg>
