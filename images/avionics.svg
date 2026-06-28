@@ -1,0 +1,38 @@
+<svg viewBox="0 0 1200 750" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+<defs>
+<linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a1020"/><stop offset="1" stop-color="#0c1a2e"/></linearGradient>
+<linearGradient id="ac5" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6f5bff"/><stop offset="1" stop-color="#19d3da"/></linearGradient>
+<linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5b9e"/><stop offset="1" stop-color="#ffd47a"/></linearGradient>
+</defs>
+<rect width="1200" height="750" fill="url(#bg5)"/>
+<g fill="#fff" opacity="0.5"><circle cx="200" cy="90" r="2"/><circle cx="400" cy="60" r="1.5"/><circle cx="600" cy="120" r="2"/><circle cx="900" cy="80" r="1.5"/><circle cx="1080" cy="140" r="2"/><circle cx="320" cy="180" r="1.5"/><circle cx="760" cy="50" r="1.5"/></g>
+<text x="80" y="130" fill="#fff" font-size="56" font-weight="800">Rocket Avionics</text>
+<text x="82" y="180" fill="#9fb0d0" font-size="29">STM32 flight software · Kalman filtering</text>
+<g transform="translate(80,216)">
+<rect width="120" height="56" rx="14" fill="url(#ac5)"/><text x="60" y="37" fill="#06070d" font-size="22" font-weight="700" text-anchor="middle">STM32</text>
+<rect x="140" width="90" height="56" rx="14" fill="none" stroke="#2a3a5a" stroke-width="2"/><text x="185" y="37" fill="#cdd7ee" font-size="22" text-anchor="middle">C</text>
+<rect x="250" width="170" height="56" rx="14" fill="none" stroke="#2a3a5a" stroke-width="2"/><text x="335" y="37" fill="#cdd7ee" font-size="22" text-anchor="middle">FreeRTOS</text>
+</g>
+<!-- rocket -->
+<g transform="translate(170,330)">
+<path d="M70 0 Q110 60 110 160 L110 300 L30 300 L30 160 Q30 60 70 0 Z" fill="#e7ecf5"/>
+<path d="M70 0 Q110 60 110 160 L70 160 Z" fill="#cdd7ee"/>
+<circle cx="70" cy="110" r="22" fill="url(#ac5)"/>
+<path d="M30 240 L0 320 L30 300 Z" fill="#6f5bff"/>
+<path d="M110 240 L140 320 L110 300 Z" fill="#6f5bff"/>
+<path d="M40 300 L70 420 L100 300 Z" fill="url(#fl)"/>
+<path d="M52 300 L70 370 L88 300 Z" fill="#fff" opacity="0.8"/>
+</g>
+<!-- telemetry panel -->
+<g transform="translate(560,300)">
+<rect width="540" height="320" rx="22" fill="#0c1424" stroke="#2a3a5a" stroke-width="2"/>
+<text x="30" y="50" fill="#19d3da" font-size="22" font-weight="700">TELEMETRY</text>
+<text x="30" y="110" fill="#9fb0d0" font-size="20">Altitude</text><text x="30" y="150" fill="#fff" font-size="40" font-weight="800">3,240 m</text>
+<text x="300" y="110" fill="#9fb0d0" font-size="20">Velocity</text><text x="300" y="150" fill="#fff" font-size="40" font-weight="800">412 m/s</text>
+<!-- altitude curve -->
+<polyline points="30,290 100,260 170,210 240,160 310,130 380,120 450,135 510,175" fill="none" stroke="url(#ac5)" stroke-width="4"/>
+<line x1="30" y1="290" x2="510" y2="290" stroke="#22304d" stroke-width="2"/>
+<g fill="#ffd47a"><circle cx="380" cy="120" r="6"/></g>
+<text x="350" y="105" fill="#ffd47a" font-size="16">apogee</text>
+</g>
+</svg>
