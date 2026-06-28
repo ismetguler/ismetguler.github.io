@@ -1,0 +1,27 @@
+<svg viewBox="0 0 1200 750" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI,Arial,sans-serif">
+<defs>
+<linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a1226"/><stop offset="1" stop-color="#0a2230"/></linearGradient>
+<linearGradient id="ac2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#19d3da"/><stop offset="1" stop-color="#6f5bff"/></linearGradient>
+</defs>
+<rect width="1200" height="750" fill="url(#bg2)"/>
+<circle cx="950" cy="600" r="230" fill="#19d3da" opacity="0.13"/>
+<text x="80" y="140" fill="#fff" font-size="60" font-weight="800">Şehir Ustası</text>
+<text x="82" y="192" fill="#9fb0d0" font-size="30">Türkiye geography game · 900+ users</text>
+<g transform="translate(80,232)">
+<rect width="150" height="58" rx="14" fill="url(#ac2)"/><text x="75" y="38" fill="#06070d" font-size="23" font-weight="700" text-anchor="middle">Kotlin</text>
+<rect x="170" width="180" height="58" rx="14" fill="none" stroke="#2a3a5a" stroke-width="2"/><text x="260" y="38" fill="#cdd7ee" font-size="23" text-anchor="middle">Firebase</text>
+<rect x="370" width="150" height="58" rx="14" fill="none" stroke="#2a3a5a" stroke-width="2"/><text x="445" y="38" fill="#cdd7ee" font-size="23" text-anchor="middle">AdMob</text>
+</g>
+<!-- abstract map with pins -->
+<g transform="translate(120,330)">
+<path d="M40 120 Q120 40 260 60 Q420 30 560 80 Q700 60 760 130 Q780 200 700 250 Q560 320 400 290 Q220 320 120 270 Q20 230 40 120 Z" fill="#13233f" stroke="#2a4366" stroke-width="2"/>
+<g fill="#ff5b9e"><circle cx="180" cy="140" r="12"/><circle cx="360" cy="110" r="12"/><circle cx="520" cy="160" r="12"/><circle cx="300" cy="220" r="12"/><circle cx="620" cy="200" r="12"/></g>
+<g fill="#19d3da"><circle cx="250" cy="180" r="9"/><circle cx="450" cy="130" r="9"/><circle cx="560" cy="240" r="9"/></g>
+</g>
+<g transform="translate(820,300)">
+<rect width="300" height="120" rx="20" fill="#101a30" stroke="#2a3a5a" stroke-width="2"/>
+<text x="30" y="50" fill="#9fb0d0" font-size="22">Score</text>
+<text x="30" y="100" fill="#fff" font-size="48" font-weight="800">81 / 81</text>
+<text x="250" y="95" font-size="50" text-anchor="middle">🏆</text>
+</g>
+</svg>
