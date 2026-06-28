@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>İsmet Güler — Flutter & Mobile App Developer</title>
 <meta name="description" content="Computer Engineering student & Flutter developer. Apps live on the App Store and Google Play, a commercial product sold to a client. Available for remote work worldwide." />
+<script>document.documentElement.className='js';</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,7 +22,7 @@ h1,h2,h3,.brand{font-family:'Sora',sans-serif}
 a{color:inherit;text-decoration:none}
 .wrap{max-width:var(--max);margin:0 auto;padding:0 24px;position:relative;z-index:2}
 
-/* ---------- background (GPU-promoted, cheap) ---------- */
+/* ---------- background ---------- */
 .aurora{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
 .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.4;will-change:transform;transform:translateZ(0)}
 .b1{width:48vw;height:48vw;background:var(--c1);top:-12vw;left:-8vw;animation:drift1 24s ease-in-out infinite}
@@ -47,9 +48,10 @@ nav.scrolled{background:rgba(6,7,13,.75);backdrop-filter:blur(14px);border-botto
 .nav-links a:hover::after{width:100%}
 @media(max-width:680px){.nav-links{display:none}}
 
-/* ---------- reveal ---------- */
-.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1)}
-.reveal.in{opacity:1;transform:none}
+/* ---------- reveal (progressive enhancement: visible by default) ---------- */
+.reveal{transition:opacity .7s cubic-bezier(.22,1,.36,1),transform .7s cubic-bezier(.22,1,.36,1)}
+html.js .reveal{opacity:0;transform:translateY(30px)}
+html.js .reveal.in{opacity:1;transform:none}
 .d1{transition-delay:.07s}.d2{transition-delay:.14s}.d3{transition-delay:.21s}.d4{transition-delay:.28s}
 
 /* ---------- hero ---------- */
@@ -107,23 +109,11 @@ h2{font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-1px;margin:12p
 .proj{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:50px}
 @media(max-width:840px){.proj{grid-template-columns:1fr}}
 .tilt{perspective:1100px}
-.card{background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:24px;overflow:hidden;height:100%;display:flex;flex-direction:column;transition:transform .15s ease,border-color .3s;transform-style:preserve-3d;position:relative}
-.card .spot{position:absolute;inset:0;background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(25,211,218,.14),transparent 45%);opacity:0;transition:opacity .3s;pointer-events:none;z-index:3}
+.card{background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:24px;padding:30px 30px 32px;height:100%;display:flex;flex-direction:column;transition:transform .15s ease,border-color .3s;transform-style:preserve-3d;position:relative;overflow:hidden}
+.card .spot{position:absolute;inset:0;background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(25,211,218,.14),transparent 45%);opacity:0;transition:opacity .3s;pointer-events:none;z-index:1}
 .card:hover{border-color:var(--c2)}
 .card:hover .spot{opacity:1}
-
-/* media: real screenshot or designed fallback */
-.media{position:relative;aspect-ratio:16/10;overflow:hidden;background:
-  linear-gradient(135deg,rgba(111,91,255,.28),rgba(25,211,218,.22));
-  display:flex;align-items:center;justify-content:center}
-.media .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:18px}
-.media .ph .em{font-size:40px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
-.media .ph .nm{font-family:'Sora';font-weight:700;font-size:15px;color:#fff;opacity:.92}
-.media .ph .hint{font-size:11px;color:rgba(255,255,255,.6)}
-.media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;z-index:2}
-.media .platform{position:absolute;top:12px;right:12px;z-index:4;font-size:11px;font-weight:600;background:rgba(6,7,13,.6);backdrop-filter:blur(6px);border:1px solid var(--line);padding:5px 10px;border-radius:999px;color:#fff}
-
-.body{padding:26px 28px 28px;display:flex;flex-direction:column;flex:1}
+.card>*{position:relative;z-index:2}
 .tag{align-self:flex-start;font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;margin-bottom:14px;letter-spacing:.3px}
 .tag.sold{color:#ffd47a;background:rgba(255,212,122,.08);border:1px solid rgba(255,212,122,.3)}
 .tag.live{color:var(--c2);background:rgba(25,211,218,.08);border:1px solid rgba(25,211,218,.3)}
@@ -172,7 +162,7 @@ footer b{color:var(--text)}
 
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important}
-  .reveal{opacity:1;transform:none;transition:none}
+  html.js .reveal{opacity:1;transform:none;transition:none}
 }
 </style>
 </head>
@@ -217,10 +207,10 @@ footer b{color:var(--text)}
   <div class="wrap">
     <div class="reveal"><div class="eyebrow">By the numbers</div></div>
     <div class="stats">
-      <div class="stat reveal d1"><div class="num" data-to="5" data-suffix="+">0</div><div class="lbl">Apps & products built</div></div>
-      <div class="stat reveal d2"><div class="num" data-to="900" data-suffix="+">0</div><div class="lbl">Users on Şehir Ustası</div></div>
+      <div class="stat reveal d1"><div class="num" data-to="5" data-suffix="+">5+</div><div class="lbl">Apps & products built</div></div>
+      <div class="stat reveal d2"><div class="num" data-to="900" data-suffix="+">900+</div><div class="lbl">Users on Şehir Ustası</div></div>
       <div class="stat reveal d3"><div class="num" data-static="true">2 stores</div><div class="lbl">Live on App Store + Play</div></div>
-      <div class="stat reveal d4"><div class="num" data-to="5.0" data-decimals="1" data-suffix="★">0</div><div class="lbl">Client app rating</div></div>
+      <div class="stat reveal d4"><div class="num" data-to="5.0" data-decimals="1" data-suffix="★">5.0★</div><div class="lbl">Client app rating</div></div>
     </div>
   </div>
 </section>
@@ -244,93 +234,51 @@ footer b{color:var(--text)}
     <div class="proj">
 
       <div class="tilt reveal d1"><div class="card"><div class="spot"></div>
-        <div class="media">
-          <div class="ph"><div class="em">🛒</div><div class="nm">Ticaret Camı</div><div class="hint">add images/ticaret.png</div></div>
-          <img loading="lazy" src="images/ticaret.svg" alt="Ticaret Camı screenshot" onerror="this.remove()">
-          <span class="platform"> iOS · Android</span>
-        </div>
-        <div class="body">
-          <span class="tag sold">Sold &amp; Delivered · 5.0★ on App Store</span>
-          <h3>Ticaret Camı</h3>
-          <p>A B2B marketplace connecting local merchants and customers in Kayseri — product discovery with category/price/distance filters, Google Maps storefronts, demand pools, and seller analytics. Commissioned by a client, built end-to-end, and handed over with full source.</p>
-          <div class="stack"><span>Flutter</span><span>Firebase</span><span>Google Maps</span><span>Apple/Google Sign-In</span></div>
-          <div class="links"><a href="https://apps.apple.com/tr/app/ticaret-cam%C4%B1/id6759068811" target="_blank" rel="noopener">App Store ↗</a></div>
-        </div>
+        <span class="tag sold">Sold &amp; Delivered · 5.0★ on App Store</span>
+        <h3>Ticaret Camı</h3>
+        <p>A B2B marketplace connecting local merchants and customers in Kayseri — product discovery with category/price/distance filters, Google Maps storefronts, demand pools, and seller analytics. Commissioned by a client, built end-to-end, and handed over with full source.</p>
+        <div class="stack"><span>Flutter</span><span>Firebase</span><span>Google Maps</span><span>Apple/Google Sign-In</span></div>
+        <div class="links"><a href="https://apps.apple.com/tr/app/ticaret-cam%C4%B1/id6759068811" target="_blank" rel="noopener">App Store ↗</a></div>
       </div></div>
 
       <div class="tilt reveal d2"><div class="card"><div class="spot"></div>
-        <div class="media">
-          <div class="ph"><div class="em">🗺️</div><div class="nm">Şehir Ustası</div><div class="hint">add images/sehirustasi.png</div></div>
-          <img loading="lazy" src="images/sehirustasi.svg" alt="Şehir Ustası screenshot" onerror="this.remove()">
-          <span class="platform"> Google Play</span>
-        </div>
-        <div class="body">
-          <span class="tag live">Live on Google Play · 900+ users</span>
-          <h3>Şehir Ustası: Türkiye Haritası</h3>
-          <p>An educational geography game built around an interactive map of Turkey. Designed the game mechanics and geo-based data model, integrated AdMob for monetization, and grew it past 900+ installs.</p>
-          <div class="stack"><span>Kotlin</span><span>Firebase</span><span>AdMob</span></div>
-          <div class="links"><a href="https://play.google.com/store/apps/details?id=com.ismetguler.sehirtahmin" target="_blank" rel="noopener">Google Play ↗</a></div>
-        </div>
+        <span class="tag live">Live on Google Play · 900+ users</span>
+        <h3>Şehir Ustası: Türkiye Haritası</h3>
+        <p>An educational geography game built around an interactive map of Turkey. Designed the game mechanics and geo-based data model, integrated AdMob for monetization, and grew it past 900+ installs.</p>
+        <div class="stack"><span>Kotlin</span><span>Firebase</span><span>AdMob</span></div>
+        <div class="links"><a href="https://play.google.com/store/apps/details?id=com.ismetguler.sehirtahmin" target="_blank" rel="noopener">Google Play ↗</a></div>
       </div></div>
 
       <div class="tilt reveal d1"><div class="card"><div class="spot"></div>
-        <div class="media">
-          <div class="ph"><div class="em">🧠</div><div class="nm">Lie Detector AI</div><div class="hint">add images/liedetector.png</div></div>
-          <img loading="lazy" src="images/liedetector.svg" alt="Lie Detector AI screenshot" onerror="this.remove()">
-          <span class="platform"> Google Play</span>
-        </div>
-        <div class="body">
-          <span class="tag ai">AI · Computer Vision</span>
-          <h3>Lie Detector AI</h3>
-          <p>An interactive biometric experience using Google ML Kit for real-time face tracking and micro-expression detection, fused with accelerometer and PPG sensor signals into a multi-layer analysis algorithm.</p>
-          <div class="stack"><span>Flutter</span><span>Google ML Kit</span><span>Sensor Fusion</span></div>
-          <div class="links"><a href="https://play.google.com/store/apps/dev?id=6884504138616325793" target="_blank" rel="noopener">Google Play ↗</a></div>
-        </div>
+        <span class="tag ai">AI · Computer Vision</span>
+        <h3>Lie Detector AI</h3>
+        <p>An interactive biometric experience using Google ML Kit for real-time face tracking and micro-expression detection, fused with accelerometer and PPG sensor signals into a multi-layer analysis algorithm.</p>
+        <div class="stack"><span>Flutter</span><span>Google ML Kit</span><span>Sensor Fusion</span></div>
+        <div class="links"><a href="https://play.google.com/store/apps/dev?id=6884504138616325793" target="_blank" rel="noopener">Google Play ↗</a></div>
       </div></div>
 
       <div class="tilt reveal d2"><div class="card"><div class="spot"></div>
-        <div class="media">
-          <div class="ph"><div class="em">💬</div><div class="nm">Directo</div><div class="hint">add images/directo.png</div></div>
-          <img loading="lazy" src="images/directo.svg" alt="Directo screenshot" onerror="this.remove()">
-          <span class="platform"> PWA</span>
-        </div>
-        <div class="body">
-          <span class="tag live">PWA · Flutter Web</span>
-          <h3>Directo</h3>
-          <p>A privacy-focused, zero-install messaging utility built on Flutter Web — real-time chat optimized for speed and instant access without any contact integration.</p>
-          <div class="stack"><span>Flutter Web</span><span>Firebase</span><span>PWA</span></div>
-          <div class="links"><a href="https://github.com/IsmetGuler/directo" target="_blank" rel="noopener">GitHub ↗</a></div>
-        </div>
+        <span class="tag live">PWA · Flutter Web</span>
+        <h3>Directo</h3>
+        <p>A privacy-focused, zero-install messaging utility built on Flutter Web — real-time chat optimized for speed and instant access without any contact integration.</p>
+        <div class="stack"><span>Flutter Web</span><span>Firebase</span><span>PWA</span></div>
+        <div class="links"><a href="https://github.com/IsmetGuler/directo" target="_blank" rel="noopener">GitHub ↗</a></div>
       </div></div>
 
       <div class="tilt reveal d1"><div class="card"><div class="spot"></div>
-        <div class="media">
-          <div class="ph"><div class="em">🚀</div><div class="nm">Rocket Avionics</div><div class="hint">add images/avionics.png</div></div>
-          <img loading="lazy" src="images/avionics.svg" alt="Avionics project" onerror="this.remove()">
-          <span class="platform"> STM32</span>
-        </div>
-        <div class="body">
-          <span class="tag code">Embedded · Avionics</span>
-          <h3>TEKNOFEST Rocket Avionics</h3>
-          <p>Real-time flight software on STM32 for a TEKNOFEST rocket team. Implemented Kalman filtering for altitude estimation (~25% sensor-noise reduction) and fail-safe parachute-deployment logic over SPI/I2C with multi-sensor fusion.</p>
-          <div class="stack"><span>STM32</span><span>C</span><span>FreeRTOS</span><span>Kalman Filter</span></div>
-          <div class="links"><a href="https://github.com/IsmetGuler/arfesa-haberlesme-test-case-study" target="_blank" rel="noopener">GitHub ↗</a></div>
-        </div>
+        <span class="tag code">Embedded · Avionics</span>
+        <h3>TEKNOFEST Rocket Avionics</h3>
+        <p>Real-time flight software on STM32 for a TEKNOFEST rocket team. Implemented Kalman filtering for altitude estimation (~25% sensor-noise reduction) and fail-safe parachute-deployment logic over SPI/I2C with multi-sensor fusion.</p>
+        <div class="stack"><span>STM32</span><span>C</span><span>FreeRTOS</span><span>Kalman Filter</span></div>
+        <div class="links"><a href="https://github.com/IsmetGuler/arfesa-haberlesme-test-case-study" target="_blank" rel="noopener">GitHub ↗</a></div>
       </div></div>
 
       <div class="tilt reveal d2"><div class="card"><div class="spot"></div>
-        <div class="media">
-          <div class="ph"><div class="em">🔔</div><div class="nm">Notification API</div><div class="hint">add images/baum.png</div></div>
-          <img loading="lazy" src="images/baum.svg" alt="Notification API" onerror="this.remove()">
-          <span class="platform"> Backend</span>
-        </div>
-        <div class="body">
-          <span class="tag code">Backend · R&amp;D</span>
-          <h3>Notification API — BAUM</h3>
-          <p>A notification & information-management API built during R&amp;D work at Erciyes University's Computer Research Center, optimizing backend-to-mobile data flow for university systems.</p>
-          <div class="stack"><span>JavaScript</span><span>REST API</span><span>Firebase</span></div>
-          <div class="links"><a href="https://github.com/IsmetGuler/Bilgi_Islem_Bildirim_API" target="_blank" rel="noopener">GitHub ↗</a></div>
-        </div>
+        <span class="tag code">Backend · R&amp;D</span>
+        <h3>Notification API — BAUM</h3>
+        <p>A notification & information-management API built during R&amp;D work at Erciyes University's Computer Research Center, optimizing backend-to-mobile data flow for university systems.</p>
+        <div class="stack"><span>JavaScript</span><span>REST API</span><span>Firebase</span></div>
+        <div class="links"><a href="https://github.com/IsmetGuler/Bilgi_Islem_Bildirim_API" target="_blank" rel="noopener">GitHub ↗</a></div>
       </div></div>
 
     </div>
@@ -414,7 +362,7 @@ document.getElementById('yr').textContent=new Date().getFullYear();
 const nav=document.getElementById('nav');
 addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>30),{passive:true});
 
-/* cursor glow — transform only, rAF-throttled (no layout thrash) */
+/* cursor glow */
 const glow=document.getElementById('glow');
 if(matchMedia('(pointer:fine)').matches){
   let gx=0,gy=0,raf=null;
@@ -423,21 +371,30 @@ if(matchMedia('(pointer:fine)').matches){
   },{passive:true});
 }
 
-/* scroll reveal */
-const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}}),{threshold:.14});
-document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+/* reveal — IO with a guaranteed fallback so content is NEVER stuck hidden */
+const revs=[...document.querySelectorAll('.reveal')];
+function showAll(){revs.forEach(el=>el.classList.add('in'));}
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver(es=>es.forEach(en=>{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}}),{threshold:.12});
+  revs.forEach(el=>io.observe(el));
+  /* safety net: if anything is still hidden after 1.6s (e.g. IO didn't fire in this view), just show it */
+  setTimeout(()=>revs.forEach(el=>{const r=el.getBoundingClientRect();if(r.top<innerHeight+200)el.classList.add('in');}),400);
+  setTimeout(showAll,1600);
+}else{ showAll(); }
 
 /* count-up */
-const cio=new IntersectionObserver(es=>es.forEach(en=>{
-  if(!en.isIntersecting)return;const el=en.target;cio.unobserve(el);
-  if(el.dataset.static==='true'||!el.dataset.to)return;
-  const to=parseFloat(el.dataset.to),dec=+(el.dataset.decimals||0),suf=el.dataset.suffix||'',dur=1400;let s=null;
-  (function step(t){if(!s)s=t;const p=Math.min((t-s)/dur,1);const v=(p*p*(3-2*p))*to;
-    el.textContent=v.toFixed(dec)+suf;if(p<1)requestAnimationFrame(step);else el.textContent=to.toFixed(dec)+suf;})(0);
-},{threshold:.6});
-document.querySelectorAll('.num[data-to]').forEach(c=>cio.observe(c));
+if('IntersectionObserver' in window){
+  const cio=new IntersectionObserver(es=>es.forEach(en=>{
+    if(!en.isIntersecting)return;const el=en.target;cio.unobserve(el);
+    if(el.dataset.static==='true'||!el.dataset.to)return;
+    const to=parseFloat(el.dataset.to),dec=+(el.dataset.decimals||0),suf=el.dataset.suffix||'',dur=1400;let s=null;
+    (function step(t){if(!s)s=t;const p=Math.min((t-s)/dur,1);const v=(p*p*(3-2*p))*to;
+      el.textContent=v.toFixed(dec)+suf;if(p<1)requestAnimationFrame(step);else el.textContent=to.toFixed(dec)+suf;})(0);
+  },{threshold:.6});
+  document.querySelectorAll('.num[data-to]').forEach(c=>cio.observe(c));
+}
 
-/* 3D tilt + spotlight (desktop only) */
+/* 3D tilt + spotlight (desktop) */
 if(matchMedia('(pointer:fine)').matches){
   document.querySelectorAll('.tilt').forEach(t=>{
     const card=t.querySelector('.card');
