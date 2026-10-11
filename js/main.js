@@ -9,6 +9,7 @@ const introLine = $('intro-line'), swipeHint = $('swipe-hint');
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* private mode */ } },
+  del(k) { try { localStorage.removeItem(k); } catch { /* private mode */ } },
 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -148,7 +149,11 @@ function setClassic(on) {
   store.set('view', on ? 'classic' : 'garage');
   body.classList.toggle('classic', on);
   classic.hidden = !on;
-  if (on) { world?.stop(); scrollTo(0, 0); } else if (world) world.start(); else boot();
+  if (on) { world?.stop(); scrollTo(0, 0); return; }
+  if (world) return world.start();
+  // Asked for by hand: if 3D was switched off after a crash, give lite mode one more go.
+  const tier = pickTier();
+  boot(tier === 'off' ? 'lite' : tier);
 }
 
 // Rev-counter loader: the needle eases towards the real load progress.
@@ -187,15 +192,59 @@ function shareCard() {
   window.__booted = true;
 }
 
-async function boot() {
-  if (booting) return; booting = true;
+// --- graphics tier ------------------------------------------------------------------------
+// 'full' is everything; 'lite' avoids the features mobile GPU drivers most often choke on
+// (float render targets, post-processing, shadow maps); 'off' is the classic view.
+// A tab that dies while starting leaves PENDING behind, so the next visit steps down a tier
+// instead of crashing again.
+const PENDING = 'gfx-pending';
+// The marker lives in a cookie as well as localStorage: a cookie is written through at once,
+// while localStorage is flushed lazily and can be lost if the tab dies a moment later.
+const pending = {
+  get() { return (document.cookie.match(/(?:^|; )gfx-pending=(\w+)/) || [])[1] || store.get(PENDING); },
+  set(v) { document.cookie = `gfx-pending=${v}; max-age=900; path=/; SameSite=Lax`; store.set(PENDING, v); },
+  clear() { document.cookie = 'gfx-pending=; max-age=0; path=/; SameSite=Lax'; store.del(PENDING); },
+};
+function gpuName() {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2'), ext = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : '';
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return String(name);
+  } catch { return ''; }
+}
+function pickTier() {
+  const forced = new URLSearchParams(location.search).get('gfx');
+  if (forced) return forced;
+  const died = pending.get();
+  if (died) { pending.clear(); store.set('gfx', died === 'full' ? 'lite' : 'off'); }
+  const saved = store.get('gfx');
+  if (saved) return saved;
+  return /PowerVR/i.test(gpuName()) ? 'lite' : 'full';   // PowerVR phones (e.g. Pixel 10) start on lite
+}
+addEventListener('pagehide', () => pending.clear());   // leaving normally is not a crash
+
+function showClassic(note, detail = '') {
+  body.classList.remove('booting', 'intro');
+  body.classList.add('classic'); classic.hidden = false; window.__booted = true;
+  classic.querySelector('.notice')?.remove();
+  if (note) classic.insertAdjacentHTML('afterbegin', `<p class="notice">${note}<span>${String(detail).replace(/[<&]/g, '')}</span></p>`);
+}
+
+async function boot(tier = pickTier()) {
+  if (booting) return;
+  if (tier === 'off') return showClassic('The 3D garage crashed on this device last time, so it’s switched off here. “Enter the garage” tries it again in lite mode.');
+  booting = true;
+  body.classList.remove('classic'); body.classList.add('booting'); classic.hidden = true;
+  loader.classList.remove('done'); dial.shown = dial.goal = 0;
+  pending.set(tier);
   try {
     progress(0.1);
     await Promise.race([Promise.all(['800', 'italic 800', '600', '700'].map((f) => document.fonts.load(`${f} 40px "Barlow Condensed"`))), wait(2500)]);
     progress(0.22);
     const { createWorld } = await import('./world.js');
     world = await createWorld({
-      canvas, projects: PROJECTS,
+      canvas, projects: PROJECTS, lite: tier === 'lite',
       onProgress: (p) => progress(0.26 + p * 0.7),
       onPick: (i) => { if (!pickLock) (i === world.index ? inspect() : select(i)); },
       onDrive,
@@ -220,11 +269,12 @@ async function boot() {
     hud.showCar(world.index);
     window.__booted = true;
     setTimeout(() => { pickLock = false; }, 500);
+    // It has drawn real frames for a few seconds: this tier is good on this device.
+    setTimeout(() => { pending.clear(); store.set('gfx', tier); }, 2500);
   } catch (err) {
     console.error('3D garage failed to start — showing the classic view.', err);
-    body.classList.remove('booting', 'intro');
-    body.classList.add('classic'); classic.hidden = false; window.__booted = true;
-    classic.insertAdjacentHTML('afterbegin', `<p class="notice">The 3D garage couldn’t start on this device, so here’s the classic view. <span>${String(err?.message || err).replace(/[<&]/g, '')}</span></p>`);
+    pending.clear(); booting = false; world?.stop(); world = null;
+    showClassic('The 3D garage couldn’t start on this device, so here’s the classic view.', err?.message || err);
   }
 }
 
@@ -271,4 +321,4 @@ setInterval(() => {
   if (now - idleAt > 24000 && now > autoAt) { autoAt = now + 7500; select((world.index + 1) % PROJECTS.length); }
 }, 1000);
 
-if (store.get('view') === 'classic') { body.classList.remove('booting'); body.classList.add('classic'); classic.hidden = false; window.__booted = true; } else boot();
+if (store.get('view') === 'classic') showClassic(); else boot();

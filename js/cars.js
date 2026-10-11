@@ -130,9 +130,10 @@ function patchFloorClip(mat, minY) {
   return mat;
 }
 
-const paint = (color, o = {}) => new THREE.MeshPhysicalMaterial({
-  color, metalness: o.metal ?? 0.5, roughness: o.rough ?? 0.42, clearcoat: o.coat ?? 1, clearcoatRoughness: 0.07,
-});
+let LITE = false;
+const paint = (color, o = {}) => (LITE
+  ? new THREE.MeshStandardMaterial({ color, metalness: 0.1, roughness: 0.42 })
+  : new THREE.MeshPhysicalMaterial({ color, metalness: o.metal ?? 0.5, roughness: o.rough ?? 0.42, clearcoat: o.coat ?? 1, clearcoatRoughness: 0.07 }));
 
 let SHARED;
 function shared() {
@@ -775,6 +776,9 @@ const SPECS = {
     };
   },
 };
+
+// Lite tier: plain painted materials instead of clear-coated ones.
+export function setCarLite(on) { LITE = on; }
 
 // Glass gets its own, dimmer copy of the environment so it reads as dark tint, not chrome.
 export function setCarEnvironment(env) { const S = shared(); S.glass.envMap = env; S.glass.envMapIntensity = 0.11; }

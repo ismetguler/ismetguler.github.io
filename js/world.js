@@ -2,7 +2,7 @@
 import * as THREE from './three.js';
 import { EffectComposer, RenderPass, UnrealBloomPass, OutputPass } from './addons.js';
 import { buildGarage, makeEnvironment } from './garage.js';
-import { buildCar, setCarEnvironment } from './cars.js';
+import { buildCar, setCarEnvironment, setCarLite } from './cars.js';
 import { createDrive } from './drive.js';
 
 const BG = 0x050608, SPACING = 6, FOV = 30, INTRO = 3.8;
@@ -14,23 +14,24 @@ const nextFrame = () => new Promise((r) => { requestAnimationFrame(r); setTimeou
 // Fluorescent start-up: a couple of stutters before the light settles.
 const flicker = (s) => (s < 0.07 ? 0.15 : s < 0.13 ? 0.9 : s < 0.2 ? 0.2 : s < 0.31 ? 1 : s < 0.35 ? 0.45 : 1);
 
-export async function createWorld({ canvas, projects, onProgress, onSelect, onPick, onHover, onDrive }) {
+export async function createWorld({ canvas, projects, lite = false, onProgress, onSelect, onPick, onHover, onDrive }) {
   const coarse = matchMedia('(pointer: coarse)').matches;
-  const lowEnd = coarse || Math.min(innerWidth, innerHeight) < 560;
+  const lowEnd = lite || coarse || Math.min(innerWidth, innerHeight) < 560;
   const n = projects.length;
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+  // Lite draws straight to the screen, so it takes the browser's own anti-aliasing.
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: lite, powerPreference: lite ? 'default' : 'high-performance' });
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = !lite;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(BG);
   scene.fog = new THREE.Fog(BG, 14, 60);
-  scene.environment = makeEnvironment(renderer);
-  scene.environmentIntensity = 0.5;
-  setCarEnvironment(scene.environment);
+  // The reflection map is baked into float render targets, which lite avoids.
+  if (!lite) { scene.environment = makeEnvironment(renderer); scene.environmentIntensity = 0.5; setCarEnvironment(scene.environment); }
+  setCarLite(lite);
 
   const camera = new THREE.PerspectiveCamera(FOV, 1, 0.3, 200);
 
@@ -38,7 +39,8 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
   const { bays } = garage;
 
   const hemi = new THREE.HemisphereLight(0xc4d3ff, 0x20160e, 0.28); scene.add(hemi);
-  const fill = new THREE.DirectionalLight(0x9fb6ff, 0.3); fill.position.set(5, 7, 12); scene.add(fill);
+  const fill = new THREE.DirectionalLight(0x9fb6ff, lite ? 0.9 : 0.3); fill.position.set(5, 7, 12); scene.add(fill);
+  if (lite) { const side = new THREE.DirectionalLight(0xffe2c4, 0.7); side.position.set(-8, 5, 6); scene.add(side); }
   const spot = new THREE.SpotLight(0xfff0dc, 0, 22, 0.54, 0.9, 1.6);
   spot.castShadow = true; spot.shadow.mapSize.set(lowEnd ? 1024 : 2048, lowEnd ? 1024 : 2048);
   spot.shadow.bias = -0.0004; spot.shadow.radius = 5; spot.shadow.camera.near = 1; spot.shadow.camera.far = 14;
@@ -70,13 +72,15 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
 
   // Post-processing
   // HDR buffers where the GPU can render to them; plain 8-bit otherwise (no bloom, but a picture).
-  const hdr = renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float');
-  const target = new THREE.WebGLRenderTarget(1, 1, { type: hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, samples: lowEnd ? 0 : 4 });
-  const composer = new EffectComposer(renderer, target);
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.34, 0.5, 1.5);
-  composer.addPass(bloom);
-  composer.addPass(new OutputPass());
+  let composer = null;
+  if (!lite) {
+    const hdr = renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float');
+    const target = new THREE.WebGLRenderTarget(1, 1, { type: hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, samples: lowEnd ? 0 : 4 });
+    composer = new EffectComposer(renderer, target);
+    composer.addPass(new RenderPass(scene, camera));
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), 0.34, 0.5, 1.5));
+    composer.addPass(new OutputPass());
+  }
 
   const S = {
     sel: 0, mode: 'row', selAt: -10, levels: new Float32Array(n), spin: 0, spinHold: 0, dragging: false,
@@ -84,13 +88,15 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
     input: { throttle: 0, brake: 0, steer: 0, hand: false },
   };
   const drive = createDrive({ scene, bays, cars, holders, projects, yaw: () => rig.yaw });
+  // Lite has no reflection map, so metal would have nothing to reflect and go black: make it painted instead.
+  if (lite) scene.traverse((o) => { for (const m of [].concat(o.material || [])) if (m.metalness > 0.2) { m.metalness = 0.15; m.roughness = Math.max(m.roughness, 0.4); } });
   const rig = { pos: new THREE.Vector3(bays[0].x, 1.6, 30), look: new THREE.Vector3(bays[0].x, 0.9, 0), ox: 0, oy: 0, yaw: -1 };
 
   function resize() {
     S.W = canvas.clientWidth || innerWidth; S.H = canvas.clientHeight || innerHeight;
-    const pr = Math.min(devicePixelRatio || 1, S.pixelCap ?? 2);
+    const pr = Math.min(devicePixelRatio || 1, S.pixelCap ?? (lite ? 1.5 : 2));
     renderer.setPixelRatio(pr); renderer.setSize(S.W, S.H, false);
-    composer.setPixelRatio(pr); composer.setSize(S.W, S.H);
+    composer?.setPixelRatio(pr); composer?.setSize(S.W, S.H);
     camera.aspect = S.W / S.H;
   }
 
@@ -186,7 +192,7 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
     spot.position.set(sx + 0.4, 5.6 + 1.2 * S.driveK, sz + 2.6); spot.target.position.set(sx, 0.2, sz);
     spot.angle = 0.54 + 0.3 * S.driveK;
     spot.intensity = (125 + 90 * S.driveK) * Math.max(S.levels[S.sel] * fl, S.driveK);
-    hemi.intensity = 0.28 + 0.5 * S.driveK;
+    hemi.intensity = (lite ? 0.75 : 0.28) + 0.5 * S.driveK;
     const glow = 0.1 + 3 * S.driveK; garage.apron.tube.color.setRGB(glow, glow * 0.96, glow * 0.88); garage.apron.pool.opacity = 0.004 + 0.075 * S.driveK;
     for (let i = 0; i < DUST; i++) {
       const j = i * 3;
@@ -197,7 +203,7 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
     dust.position.x = sx; dustMat.opacity = 0.55 * S.levels[S.sel] * fl * (1 - S.driveK);
     rim.position.set(sx - 3.5, 3.6, -5.2); rim.target.position.set(sx, 0.9, 0); rim.intensity = 60 * S.levels[S.sel] * fl;
 
-    composer.render(dt);
+    if (composer) composer.render(dt); else renderer.render(scene, camera);
   }
 
   // Adaptive quality: drop the mirror and resolution if the first seconds run slow.
