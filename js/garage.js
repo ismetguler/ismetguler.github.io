@@ -182,7 +182,54 @@ export function buildGarage({ scene, projects, spacing, reflect }) {
     props[order[(i + 3) % order.length]](x + 0.9, WZ + 0.7);
   }
 
+  // --- Apron: the open floor in front of the bays, where test drives happen ---------------
+  const AX = 28, AZ = 25;
+  const sideTex = wallTex.clone(); sideTex.repeat.set((AZ - WZ) / spacing, 1); sideTex.offset.x = 0; sideTex.needsUpdate = true;
+  const sideMat = new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.92 });
+  for (const s of [-1, 1]) {
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(AZ - WZ, 6), sideMat);
+    w.position.set(s * AX, 3, (AZ + WZ) / 2); w.rotation.y = -s * Math.PI / 2; group.add(w);
+  }
+  const doorTex = tex(canvas(1024, 512, (g, w, h) => {
+    g.drawImage(concrete(1024, 44, 0.05, 31), 0, 0);
+    const x0 = w * 0.14, x1 = w * 0.86, y0 = h * 0.2;
+    g.fillStyle = '#17191d'; g.fillRect(x0, y0, x1 - x0, h - y0);
+    for (let y = y0; y < h; y += 13) { g.fillStyle = 'rgba(255,255,255,0.06)'; g.fillRect(x0, y, x1 - x0, 2); g.fillStyle = 'rgba(0,0,0,0.45)'; g.fillRect(x0, y + 9, x1 - x0, 4); }
+    g.fillStyle = '#0c0d0f'; g.fillRect(x0 - 14, y0 - 16, x1 - x0 + 28, 16);
+    for (const x of [x0 - 30, x1 + 6]) { for (let y = h * 0.62, k = 0; y < h; y += 22, k++) { g.fillStyle = k % 2 ? '#131313' : '#e8b21c'; g.fillRect(x, y, 24, 22); } }
+    g.fillStyle = 'rgba(255,255,255,0.22)'; g.font = `800 62px ${FONT}`; g.textAlign = 'center'; g.fillText('EXIT', w / 2, y0 - 28);
+    g.fillStyle = '#ff5a1f'; g.fillRect(w / 2 - 54, y0 - 22, 108, 5);
+  }));
+  doorTex.wrapS = THREE.RepeatWrapping; doorTex.repeat.set(4, 1);
+  const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(AX * 2, 6), new THREE.MeshStandardMaterial({ map: doorTex, roughness: 0.9 }));
+  frontWall.position.set(0, 3, AZ); frontWall.rotation.y = Math.PI; group.add(frontWall);
+
+  const apronTube = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+  const apronPool = new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, color: 0xfff1df });
+  for (const z of [10, 18.5]) {
+    const r = new THREE.Mesh(new THREE.BoxGeometry(AX * 2, 0.1, 0.14), steel); r.position.set(0, 4.86, z); group.add(r);
+    for (const x of [-20, -10, 0, 10, 20]) {
+      const h = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 0.5), steel); h.position.set(x, 4.76, z); group.add(h);
+      for (const dz of [-0.14, 0.14]) { const t = new THREE.Mesh(new THREE.BoxGeometry(3, 0.05, 0.07), apronTube); t.position.set(x, 4.68, z + dz); group.add(t); }
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(13, 11), apronPool); p.rotation.x = -Math.PI / 2; p.position.set(x, 0.006, z); p.renderOrder = 2; group.add(p);
+    }
+  }
+  // Painted markings: a dashed centre line and a stencil
+  const paintMat = new THREE.MeshStandardMaterial({ color: 0xd8d6cf, roughness: 0.8, transparent: true, opacity: 0.42, depthWrite: false });
+  const dashes = [];
+  for (let x = -24; x <= 24; x += 4) dashes.push(new THREE.PlaneGeometry(2, 0.14).rotateX(-Math.PI / 2).translate(x, 0.004, 14.2));
+  for (const x of [-AX + 1.6, AX - 1.6]) dashes.push(new THREE.PlaneGeometry(0.14, 20).rotateX(-Math.PI / 2).translate(x, 0.004, 13.4));
+  dashes.push(new THREE.PlaneGeometry(AX * 2 - 3.2, 0.14).rotateX(-Math.PI / 2).translate(0, 0.004, 23.4));
+  const pos = [], idx = [];
+  dashes.forEach((d) => { const base = pos.length / 3; pos.push(...d.attributes.position.array); for (const i of d.index.array) idx.push(base + i); });
+  const dashGeo = new THREE.BufferGeometry(); dashGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); dashGeo.setIndex(idx); dashGeo.computeVertexNormals();
+  const dashMesh = new THREE.Mesh(dashGeo, paintMat); dashMesh.renderOrder = 3; group.add(dashMesh);
+  const trackTex = tex(canvas(1024, 160, (g, w, h) => { g.fillStyle = '#fff'; g.font = `800 150px ${FONT}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('TEST TRACK', w / 2, h / 2 + 8); }));
+  const track = new THREE.Mesh(new THREE.PlaneGeometry(9.6, 1.5), new THREE.MeshBasicMaterial({ map: trackTex, transparent: true, opacity: 0.22, depthWrite: false }));
+  track.rotation.x = -Math.PI / 2; track.position.set(0, 0.005, 21.2); track.renderOrder = 3; group.add(track);
+
   return {
+    apron: { tube: apronTube, pool: apronPool },
     bays, bayX, mirror,
     setReflect(on) { if (mirror) mirror.visible = on; floorMat.opacity = on ? 0.62 : 1; floorMat.depthWrite = !on; floorMat.transparent = on; floorMat.needsUpdate = true; },
   };

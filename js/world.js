@@ -6,6 +6,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { buildGarage, makeEnvironment } from './garage.js';
 import { buildCar, setCarEnvironment } from './cars.js';
+import { createDrive } from './drive.js';
 
 const BG = 0x050608, SPACING = 6, FOV = 30, INTRO = 3.8;
 const damp = (a, b, k, dt) => a + (b - a) * (1 - Math.exp(-k * dt));
@@ -16,7 +17,7 @@ const nextFrame = () => new Promise((r) => { requestAnimationFrame(r); setTimeou
 // Fluorescent start-up: a couple of stutters before the light settles.
 const flicker = (s) => (s < 0.07 ? 0.15 : s < 0.13 ? 0.9 : s < 0.2 ? 0.2 : s < 0.31 ? 1 : s < 0.35 ? 0.45 : 1);
 
-export async function createWorld({ canvas, projects, onProgress, onSelect, onPick, onHover }) {
+export async function createWorld({ canvas, projects, onProgress, onSelect, onPick, onHover, onDrive }) {
   const coarse = matchMedia('(pointer: coarse)').matches;
   const lowEnd = coarse || Math.min(innerWidth, innerHeight) < 560;
   const n = projects.length;
@@ -39,7 +40,7 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
   const garage = buildGarage({ scene, projects, spacing: SPACING, reflect: !lowEnd });
   const { bays } = garage;
 
-  scene.add(new THREE.HemisphereLight(0xc4d3ff, 0x20160e, 0.28));
+  const hemi = new THREE.HemisphereLight(0xc4d3ff, 0x20160e, 0.28); scene.add(hemi);
   const fill = new THREE.DirectionalLight(0x9fb6ff, 0.3); fill.position.set(5, 7, 12); scene.add(fill);
   const spot = new THREE.SpotLight(0xfff0dc, 0, 22, 0.54, 0.9, 1.6);
   spot.castShadow = true; spot.shadow.mapSize.set(lowEnd ? 1024 : 2048, lowEnd ? 1024 : 2048);
@@ -80,8 +81,10 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
 
   const S = {
     sel: 0, mode: 'row', selAt: -10, levels: new Float32Array(n), spin: 0, spinHold: 0, dragging: false,
-    px: 0, py: 0, W: 1, H: 1, running: false, t: 0, now: 0, panel: 0,
+    px: 0, py: 0, W: 1, H: 1, running: false, t: 0, now: 0, panel: 0, driveK: 0,
+    input: { throttle: 0, brake: 0, steer: 0, hand: false },
   };
+  const drive = createDrive({ scene, bays, cars, holders, projects, yaw: () => rig.yaw });
   const rig = { pos: new THREE.Vector3(bays[0].x, 1.6, 30), look: new THREE.Vector3(bays[0].x, 0.9, 0), ox: 0, oy: 0, yaw: -1 };
 
   function resize() {
@@ -99,6 +102,15 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
     const fit = portrait ? 4.3 : aspect < 1.45 ? 7.6 : 10.4;
     const dist = fit / (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * aspect);
     want.yaw = portrait ? -1.27 : -0.98;
+    if (S.mode === 'drive' && drive.state.active) {
+      // Chase camera, behind and above the car
+      const d = drive.state, c = Math.cos(d.th), s = Math.sin(d.th), back = portrait ? 14 : 9.4, high = portrait ? 6 : 3.6;
+      want.pos.set(d.x - c * back, high, d.z + s * back);
+      want.look.set(d.x + c * 2.4, 0.9, d.z - s * 2.4);
+      want.ox = 0; want.oy = portrait ? 0.1 : 0.05;
+      scene.fog.near = 20; scene.fog.far = 78;
+      return;
+    }
     if (S.mode === 'inspect') {
       want.pos.set(bx + S.px * 0.25, 1.32 + S.py * 0.12, dist * (portrait ? 0.86 : 0.74));
       want.look.set(bx, 0.82, 0);
@@ -117,6 +129,10 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
   }
 
   function frame(dt, t) {
+    drive.update(dt, t, S.input);
+    const driving = S.mode === 'drive' && drive.state.active;
+    S.driveK = damp(S.driveK, driving ? 1 : 0, 3, dt);
+    if (driving) onDrive?.(drive.state);
     aim();
     // Opening shot: a slow roll-in from the dark end of the garage.
     const cine = S.intro ? S.now - S.intro.t0 : -1;   // wall-clock, so a slow device can't stretch it
@@ -126,14 +142,16 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
       rig.pos.lerpVectors(S.intro.pos, want.pos, p); rig.look.lerpVectors(S.intro.look, want.look, p);
       rig.ox = want.ox * p; rig.oy = want.oy * p; rig.yaw = want.yaw;
     } else {
-      const k = S.mode === 'row' ? 3.4 : 2.8;
-      rig.pos.x = damp(rig.pos.x, want.pos.x, k, dt); rig.pos.y = damp(rig.pos.y, want.pos.y, k, dt); rig.pos.z = damp(rig.pos.z, want.pos.z, k * 0.8, dt);
-      rig.look.x = damp(rig.look.x, want.look.x, k * 1.25, dt); rig.look.y = damp(rig.look.y, want.look.y, k, dt);
+      const k = S.mode === 'row' ? 3.4 : S.mode === 'drive' ? 3.8 : 2.8, kl = S.mode === 'drive' ? 7 : k * 1.25;
+      rig.pos.x = damp(rig.pos.x, want.pos.x, k, dt); rig.pos.y = damp(rig.pos.y, want.pos.y, k, dt); rig.pos.z = damp(rig.pos.z, want.pos.z, S.mode === 'drive' ? k : k * 0.8, dt);
+      rig.look.x = damp(rig.look.x, want.look.x, kl, dt); rig.look.y = damp(rig.look.y, want.look.y, k, dt); rig.look.z = damp(rig.look.z, want.look.z, kl, dt);
       rig.ox = damp(rig.ox, want.ox, 4, dt); rig.oy = damp(rig.oy, want.oy, 4, dt); rig.yaw = damp(rig.yaw, want.yaw, 4, dt);
     }
     camera.position.copy(rig.pos);
+    if (driving) camera.position.y += drive.state.bump * 0.06 * Math.sin(t * 95);
     camera.lookAt(rig.look);
-    camera.rotateZ((rig.look.x - rig.pos.x) * -0.012);      // lean into the move
+    if (S.driveK < 0.02) camera.rotateZ(Math.max(-0.03, Math.min(0.03, (rig.look.x - rig.pos.x) * -0.012)));   // lean into the move
+    camera.fov = damp(camera.fov, S.mode === 'drive' ? 44 : FOV, 3, dt);
     camera.setViewOffset(S.W, S.H, rig.ox * S.W, rig.oy * S.H, S.W, S.H);
 
     // Turntable
@@ -148,7 +166,7 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
     for (let i = 0; i < n; i++) {
       const on = i === S.sel ? 1 : 0, b = bays[i];
       S.levels[i] = damp(S.levels[i], on, on ? 6 : 3, dt);
-      let lv = S.levels[i] * (on ? fl : 1), idle = 1;
+      let lv = Math.max(S.levels[i] * (on ? fl : 1), 0.4 * S.driveK), idle = 1;
       if (S.intro) {
         // Bays strike up one after another, farthest first, then all but the chosen one settle back.
         const tau = cine - 0.45 - (S.intro.far - Math.abs(i - S.sel)) * 0.17, show = tau < 0 ? 0 : flicker(tau);
@@ -156,24 +174,28 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
         lv = on ? show : show * (1 - smooth(INTRO - 1.5, INTRO - 0.2, cine));
         S.levels[i] = on ? show : 0;
       }
-      cars[i].setPower(lv); cars[i].update(t, dt);
-      holders[i].rotation.y = rig.yaw;
+      cars[i].setPower(i === drive.state.index ? Math.max(lv, S.driveK) : lv); cars[i].update(t, dt);
+      if (i !== drive.state.index) holders[i].rotation.y = rig.yaw;
       b.pivot.rotation.y = i === S.sel ? S.spin : damp(b.pivot.rotation.y, 0, 5, dt);
       const tube = 0.35 * idle + 3.4 * lv; b.tubeMat.color.setRGB(tube, tube * 0.96, tube * 0.88);
       b.wallPool.opacity = 0.02 + 0.13 * lv; b.floorPool.opacity = 0.03 * lv;
       b.ringMat.opacity = 0.05 + 0.95 * lv; b.ringMat.color.set(projects[i].color).multiplyScalar(0.6 + 2.2 * lv);
       b.ticksMat.opacity = (0.05 + 0.4 * S.levels[i]) * idle; b.sign.opacity = (0.05 + 0.2 * S.levels[i]) * idle;
     }
-    const sx = damp(spot.position.x, bays[S.sel].x, 6, dt);
-    spot.position.set(sx + 0.4, 5.6, 2.6); spot.target.position.set(sx, 0.2, 0);
-    spot.intensity = 125 * S.levels[S.sel] * fl;
+    // The key light sits over the selected bay, or rides above the car on a test drive.
+    const sx = damp(spot.target.position.x, driving ? drive.state.x : bays[S.sel].x, 6, dt), sz = damp(spot.target.position.z, driving ? drive.state.z : 0, 6, dt);
+    spot.position.set(sx + 0.4, 5.6 + 1.2 * S.driveK, sz + 2.6); spot.target.position.set(sx, 0.2, sz);
+    spot.angle = 0.54 + 0.3 * S.driveK;
+    spot.intensity = (125 + 90 * S.driveK) * Math.max(S.levels[S.sel] * fl, S.driveK);
+    hemi.intensity = 0.28 + 0.5 * S.driveK;
+    const glow = 0.1 + 3 * S.driveK; garage.apron.tube.color.setRGB(glow, glow * 0.96, glow * 0.88); garage.apron.pool.opacity = 0.004 + 0.075 * S.driveK;
     for (let i = 0; i < DUST; i++) {
       const j = i * 3;
       dustPos[j + 1] -= dustVel[i] * dt; dustPos[j] += Math.sin(t * 0.3 + i) * 0.02 * dt;
       if (dustPos[j + 1] < 0.1) dustPos[j + 1] = 4.05;
     }
     dustGeo.attributes.position.needsUpdate = true;
-    dust.position.x = sx; dustMat.opacity = 0.55 * S.levels[S.sel] * fl;
+    dust.position.x = sx; dustMat.opacity = 0.55 * S.levels[S.sel] * fl * (1 - S.driveK);
     rim.position.set(sx - 3.5, 3.6, -5.2); rim.target.position.set(sx, 0.9, 0); rim.intensity = 60 * S.levels[S.sel] * fl;
 
     composer.render(dt);
@@ -238,7 +260,15 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
       if (!silent) onSelect?.(i);
       return true;
     },
-    setMode(mode, panelFraction = 0) { S.mode = mode; S.panel = panelFraction; S.spinHold = 0; canvas.classList.toggle('inspecting', mode === 'inspect'); },
+    setMode(mode, panelFraction = 0) {
+      if (mode === 'drive' && S.mode !== 'drive') { if (drive.busy()) return false; drive.enter(S.sel, S.spin + rig.yaw); S.spin = 0; }
+      if (mode !== 'drive' && S.mode === 'drive') { drive.exit(); Object.assign(S.input, { throttle: 0, brake: 0, steer: 0, hand: false }); }
+      S.mode = mode; S.panel = panelFraction; S.spinHold = 0; canvas.classList.toggle('inspecting', mode === 'inspect');
+      return true;
+    },
+    resetDrive() { drive.reset(); },
+    get input() { return S.input; },
+    drive,
     start() { if (S.running) return; S.running = true; resize(); last = performance.now() / 1000; raf = requestAnimationFrame(loop); },
     stop() { S.running = false; cancelAnimationFrame(raf); },
     intro() {

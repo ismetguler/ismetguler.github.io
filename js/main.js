@@ -34,6 +34,9 @@ const hud = createHud({
   share: () => share(),
   paints: (i) => { const f = world.cars[i].factoryPaint; return { paints: [f, ...PALETTE.filter((c) => c !== f)].slice(0, 7), paint: painted[i] || f }; },
   paint: (hex) => { painted[world.index] = hex; car().setPaint(hex); audio.tick(); },
+  drive: () => testDrive(),
+  park: () => park(),
+  reset: () => world?.resetDrive(),
 });
 buildClassic(classic, { garage: () => setClassic(false) });
 
@@ -58,7 +61,7 @@ function share() {
 }
 
 function select(i) {
-  if (!world || !world.select(i)) return;
+  if (!world || mode === 'drive' || !world.select(i)) return;
   audio.whoosh(); audio.lights();
   swipeHint.classList.add('gone');
   hud.showCar(world.index);
@@ -77,7 +80,66 @@ function openPanel(name) {
   mode = 'panel';
   world.setMode('wide', drawerFraction(hud.openDrawer(name)));
 }
+// --- test drive ---------------------------------------------------------------------------
+const driveEl = { speed: $('drive-speed'), cones: $('drive-cones'), time: $('drive-time'), best: $('drive-best') };
+const held = new Set(), pad = { left: false, right: false, gas: false, brake: false };
+const shown = { speed: -1, cones: -1, time: -1, hits: 0, bump: 0, done: false };
+function steerInput() {
+  if (!world) return;
+  const k = (...names) => names.some((n) => held.has(n));
+  Object.assign(world.input, {
+    throttle: k('w', 'arrowup') || pad.gas ? 1 : 0,
+    brake: k('s', 'arrowdown') || pad.brake ? 1 : 0,
+    steer: (k('a', 'arrowleft') || pad.left ? 1 : 0) - (k('d', 'arrowright') || pad.right ? 1 : 0),
+    hand: k(' '),
+  });
+}
+function testDrive() {
+  if (!world || mode === 'drive') return;
+  if (mode !== 'row') hud.closeDrawer();
+  if (!world.setMode('drive')) return;
+  mode = 'drive'; body.classList.add('driving'); held.clear(); steerInput();
+  Object.assign(shown, { speed: -1, cones: -1, time: -1, hits: 0, done: false });
+  const best = +store.get('cone-run') || 0;
+  driveEl.best.textContent = best ? `Best ${best.toFixed(1)} s` : 'Knock every cone down';
+  audio.engine(kind(), true);
+}
+function park() {
+  if (mode !== 'drive') return;
+  mode = 'row'; body.classList.remove('driving'); held.clear(); Object.assign(pad, { left: false, right: false, gas: false, brake: false });
+  world.setMode('row'); audio.driveStop();
+}
+// Called every frame while driving: keeps the read-outs and the engine note in step.
+function onDrive(d) {
+  const kmh = Math.round(d.speed * 3.6), time = Math.round(d.time * 10);
+  if (kmh !== shown.speed) driveEl.speed.textContent = shown.speed = kmh;
+  if (d.cones !== shown.cones) { shown.cones = d.cones; driveEl.cones.textContent = `${d.cones} / ${d.coneTotal}`; }
+  if (time !== shown.time) { shown.time = time; driveEl.time.textContent = `${d.time.toFixed(1)} s`; }
+  if (d.hits > shown.hits) audio.tok();
+  shown.hits = d.hits;
+  if (d.bump > shown.bump + 0.25) audio.thump(d.bump);
+  shown.bump = d.bump;
+  if (d.done && !shown.done) {
+    const best = +store.get('cone-run') || 0, record = !best || d.time < best;
+    if (record) store.set('cone-run', d.time.toFixed(2));
+    driveEl.best.textContent = record ? `New best — ${d.time.toFixed(1)} s` : `Cleared · best ${best.toFixed(1)} s`;
+    audio.horn(kind());
+  }
+  shown.done = d.done;
+  const top = world.drive.profile().top, sp = Math.abs(d.vf) / top;
+  audio.driveUpdate(kind(), sp < 0.02 ? 0.04 : ((sp * 3.1) % 1) * 0.6 + 0.28 + sp * 0.1, d.throttle, d.skid);
+}
+document.querySelectorAll('[data-pad]').forEach((b) => {
+  const set = (v) => (e) => { e.preventDefault(); pad[b.dataset.pad] = v; b.classList.toggle('on', v); steerInput(); };
+  b.addEventListener('pointerdown', (e) => { b.setPointerCapture(e.pointerId); set(true)(e); });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, set(false));
+  b.addEventListener('contextmenu', (e) => e.preventDefault());
+});
+addEventListener('keyup', (e) => { held.delete(e.key.toLowerCase()); if (mode === 'drive') steerInput(); });
+addEventListener('blur', () => { held.clear(); steerInput(); });
+
 function back() {
+  if (mode === 'drive') return park();
   if (mode === 'row') return;
   mode = 'row'; hud.closeDrawer(); world?.setMode('row');
 }
@@ -115,6 +177,16 @@ function skippable(ms) {
   });
 }
 
+// A still composition for link previews: no HUD, one car, name and line.
+function shareCard() {
+  world.select(1, true);
+  const x = world.bays[1].x;
+  world.state.free = [x - 1.9, 1.22, 10.9, x - 2.55, 0.95, 0];
+  body.classList.remove('booting'); body.classList.add('og'); loader.classList.add('done');
+  body.insertAdjacentHTML('beforeend', '<div class="og-card"><span class="mark"><b>IG</b></span><h2>İsmet Güler</h2><p>Full-stack &amp; mobile developer</p><em>Apps people <i>actually use.</i></em><small>ismetguler.github.io</small></div>');
+  window.__booted = true;
+}
+
 async function boot() {
   if (booting) return; booting = true;
   try {
@@ -126,6 +198,7 @@ async function boot() {
       canvas, projects: PROJECTS,
       onProgress: (p) => progress(0.26 + p * 0.7),
       onPick: (i) => { if (!pickLock) (i === world.index ? inspect() : select(i)); },
+      onDrive,
     });
     if (location.search.includes('debug')) window.__garage = world;
     world.select(fromHash(), true);
@@ -133,6 +206,8 @@ async function boot() {
     progress(1);
     await revDone();
     await wait(260);
+
+    if (new URLSearchParams(location.search).has('og')) return shareCard();
 
     // Lights come on bay by bay while the camera rolls in.
     loader.classList.add('done');
@@ -155,6 +230,14 @@ async function boot() {
 addEventListener('keydown', (e) => {
   if (body.classList.contains('classic') || body.classList.contains('booting') || body.classList.contains('intro') || !world || e.metaKey || e.ctrlKey || e.altKey) return;
   const k = e.key;
+  if (mode === 'drive') {
+    if (k === 'Escape') return park();
+    if (k === 'r' || k === 'R') return world.resetDrive();
+    if (k === 'h' || k === 'H') return horn();
+    if (k.startsWith('Arrow') || k === ' ') e.preventDefault();
+    held.add(k.toLowerCase()); return steerInput();
+  }
+  if (k === 't' || k === 'T') return testDrive();
   if (k === 'ArrowRight' || k === 'd' || k === 'D') select(world.index + 1);
   else if (k === 'ArrowLeft' || k === 'a' || k === 'A') select(world.index - 1);
   else if (k === 'Enter' && mode === 'row' && !e.target.closest('button,a')) inspect();

@@ -369,14 +369,21 @@ function assemble(spec, info) {
 
   g.traverse((o) => { if (o.isMesh && !o.userData.fx) o.castShadow = true; });
 
-  const REV = 1.8;
+  const REV = 1.8, drive = { roll: 0, pitch: 0, throttle: 0, brake: 0 };
   let power = 0, revT = 0, flashT = 0;
+  wheels.forEach((w) => { w.rotation.order = 'YXZ'; });
   return {
     group: g,
     size: { length: x1 - x0, x0, x1, width: half(0) * 2, height: C ? Math.max(...C.roof.map((p) => p[1])) : Math.max(...B.deck.map((p) => p[1])) },
     factoryPaint: `#${new THREE.Color(col.paint).getHexString()}`,
     setPower(p) { power = p; },
     setPaint(hex) { m.paint.color.set(hex); m.paint.userData.lip?.color.set(hex); },
+    wheelbase: W.xF - W.xR, wheelRadius: W.r,
+    // Wheels are stored front-right, front-left, rear-right, rear-left.
+    setDrive(spin, steer, roll, pitch, throttle, brake) {
+      wheels.forEach((w, k) => { const s = k % 2 ? -1 : 1; w.rotation.y = (s < 0 ? Math.PI : 0) + (k < 2 ? steer : 0); w.rotation.z = -s * spin; });
+      drive.roll = roll; drive.pitch = pitch; drive.throttle = throttle; drive.brake = brake;
+    },
     rev() { revT = REV; },
     flash() { flashT = 0.56; },
     update(t, dt = 0.016) {
@@ -385,13 +392,14 @@ function assemble(spec, info) {
       const rv = revT > 0 ? Math.min(1, (REV - revT) / 0.3) * Math.min(1, revT / 0.7) : 0;
       const fl = flashT > 0 && flashT % 0.28 > 0.1 ? 1 : 0;
       m.head.emissiveIntensity = 0.05 + 5 * power + 3 * rv * power + 7 * fl;
-      m.tail.emissiveIntensity = 0.25 + 3.2 * power + 3 * rv * power;
+      m.tail.emissiveIntensity = 0.25 + 3.2 * power + 3 * rv * power + 7 * drive.brake;
       m.amber.emissiveIntensity = 0.1 + 1.6 * power + 6 * fl;
       beamMat.uniforms.uOpacity.value = 0.3 * power + 0.2 * rv * power + 0.3 * fl;
       spillMat.opacity = 0.16 * power + 0.1 * rv * power + 0.2 * fl;
       g.position.y = rv * 0.011 * Math.sin(t * 74);
-      g.rotation.x = rv * 0.007 * Math.sin(t * 57);
-      tick?.(t, power * (1 + 0.9 * rv));
+      g.rotation.x = drive.roll + rv * 0.007 * Math.sin(t * 57);
+      g.rotation.z = drive.pitch;
+      tick?.(t, power * (1 + 0.9 * rv + 0.6 * drive.throttle));
     },
   };
 }

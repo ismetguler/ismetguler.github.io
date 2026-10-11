@@ -16,6 +16,38 @@ function titleHTML(name) {
 const chips = (list) => `<ul class="chips">${list.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`;
 const linkBtn = (p, cls = '') => `<a class="btn ${cls}" href="${esc(p.link[1])}" target="_blank" rel="noopener"><span>${esc(p.link[0])} ↗</span></a>`;
 
+// Live GitHub numbers. Public API, no key; cached for the session and dropped silently if it fails.
+let gh = null;
+function loadGitHub() {
+  if (gh) return gh;
+  try { const c = sessionStorage.getItem('gh2'); if (c) return (gh = Promise.resolve(JSON.parse(c))); } catch { /* storage blocked */ }
+  const get = (path) => fetch(`https://api.github.com/users/IsmetGuler${path}`, { headers: { accept: 'application/vnd.github+json' } }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))));
+  gh = Promise.all([get(''), get('/repos?sort=pushed&per_page=12')]).then(([u, repos]) => {
+    const skip = ['ismetguler', 'ismetguler.github.io'];   // profile README and this site itself
+    const data = { repos: u.public_repos, last: repos[0]?.pushed_at, list: repos.filter((r) => !r.fork && !skip.includes(r.name.toLowerCase())).slice(0, 5).map((r) => ({ name: r.name, url: r.html_url, lang: r.language, pushed: r.pushed_at, desc: r.description })) };
+    try { sessionStorage.setItem('gh2', JSON.stringify(data)); } catch { /* fine */ }
+    return data;
+  });
+  gh.catch(() => { gh = null; });
+  return gh;
+}
+function ago(iso) {
+  const d = Math.floor((Date.now() - new Date(iso)) / 864e5);
+  return d < 1 ? 'today' : d === 1 ? 'yesterday' : d < 30 ? `${d} days ago` : d < 365 ? `${Math.floor(d / 30)} mo ago` : `${Math.floor(d / 365)} yr ago`;
+}
+const GH_SLOT = '<section class="gh" data-gh hidden></section>';
+function fillGitHub(root) {
+  const el = root.querySelector('[data-gh]');
+  if (!el) return;
+  loadGitHub().then((d) => {
+    el.innerHTML = `
+      <h3>Live from GitHub</h3>
+      <dl class="sheet"><div><dt>${esc(d.repos)}</dt><dd>public repositories</dd></div><div><dt>${esc(d.last ? ago(d.last) : '—')}</dt><dd>last push</dd></div></dl>
+      <ul class="rows">${d.list.map((r) => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener"><strong>${esc(r.name)} ↗</strong></a><em>${r.lang ? `${esc(r.lang)} · ` : ''}<b>pushed ${ago(r.pushed)}</b></em>${r.desc ? `<p>${esc(r.desc)}</p>` : ''}</li>`).join('')}</ul>`;
+    el.hidden = false;
+  }, () => el.remove());
+}
+
 let soundOn = false;
 const soundBtn = () => `<button class="sound" data-act="sound" aria-pressed="${soundOn}" aria-label="Sound"><i class="eq"><b></b><b></b><b></b><b></b></i><span>Sound ${soundOn ? 'on' : 'off'}</span></button>`;
 
@@ -33,6 +65,7 @@ const PANELS = {
       ${chips(p.stack)}
       <h3>Try it</h3>
       <div class="try">
+        <button class="btn primary" data-act="drive"><span>Test drive <kbd>T</kbd></span></button>
         <button class="btn" data-act="rev"><span>${esc(p.rev || 'Rev engine')} <kbd>E</kbd></span></button>
         <button class="btn" data-act="horn"><span>${esc(p.horn || 'Horn')} <kbd>H</kbd></span></button>
         ${soundBtn()}
@@ -63,7 +96,8 @@ const PANELS = {
     return `
       <p class="eyebrow">Logbook</p>
       <h2>Service history</h2>
-      <ul class="rows">${EXPERIENCE.map(([t, org, when, d]) => `<li><strong>${esc(t)}</strong><em>${esc(org)} · <b>${esc(when)}</b></em><p>${esc(d)}</p></li>`).join('')}</ul>`;
+      <ul class="rows">${EXPERIENCE.map(([t, org, when, d]) => `<li><strong>${esc(t)}</strong><em>${esc(org)} · <b>${esc(when)}</b></em><p>${esc(d)}</p></li>`).join('')}</ul>
+      ${GH_SLOT}`;
   },
   toolbox() {
     return `
@@ -115,7 +149,7 @@ export function createHud(on) {
         <h2 class="car-name"${lang(p)}>${titleHTML(p.name)}</h2>
         <p class="car-status">${esc(p.status)}</p>
         <p class="car-tag">${esc(p.tag)}</p>
-        <div class="car-actions"><button class="btn primary" data-act="inspect"><span>Inspect <kbd>Enter</kbd></span></button>${linkBtn(p)}</div>`;
+        <div class="car-actions"><button class="btn primary" data-act="inspect"><span>Inspect <kbd>Enter</kbd></span></button><button class="btn" data-act="drive"><span>Test drive <kbd>T</kbd></span></button>${linkBtn(p)}</div>`;
       replay(info);
       spec.innerHTML = `<h2>Spec sheet</h2><dl>${p.specs.map(([v, l], k) => `<div style="--i:${k}"><dt>${esc(v)}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl>${chips(p.stack)}`;
       replay(spec);
@@ -125,7 +159,7 @@ export function createHud(on) {
     },
     openDrawer(kind, i) {
       body.innerHTML = PANELS[kind](i, kind === 'project' ? on.paints(i) : null);
-      stagger(body); replay(body); body.scrollTop = 0;
+      stagger(body); replay(body); body.scrollTop = 0; fillGitHub(body);
       drawer.setAttribute('aria-hidden', 'false');
       document.body.classList.add('drawer-open');
       document.querySelectorAll('.nav [data-panel]').forEach((b) => b.classList.toggle('on', b.dataset.panel === kind));
@@ -168,6 +202,7 @@ export function buildClassic(root, on) {
       <h2>Experience</h2>
       <ul class="rows">${EXPERIENCE.map(([t, org, when, d]) => `<li><strong>${esc(t)}</strong><em>${esc(org)} · <b>${esc(when)}</b></em><p>${esc(d)}</p></li>`).join('')}</ul>
     </section>
+    ${GH_SLOT}
     <section>
       <h2>Toolbox</h2>
       <div class="skills">${SKILLS.map(([t, list]) => `<div><h4>${esc(t)}</h4>${chips(list)}</div>`).join('')}</div>
@@ -182,5 +217,6 @@ export function buildClassic(root, on) {
       </div>
     </section>
     <footer>© ${esc(PROFILE.name)} · built remotely from Türkiye</footer>`;
+  fillGitHub(root);
   root.addEventListener('click', (e) => { if (e.target.closest('[data-act=garage]')) on.garage(); });
 }

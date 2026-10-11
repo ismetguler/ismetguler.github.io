@@ -9,11 +9,17 @@
 <meta property="og:title" content="İsmet Güler — Full-Stack & Mobile Developer">
 <meta property="og:description" content="Walk through the garage: every car is a shipped project.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://ismetguler.github.io/">
+<meta property="og:image" content="https://ismetguler.github.io/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ismetguler.github.io/assets/og.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23050608'/%3E%3Ctext x='32' y='44' font-family='Arial Narrow,Arial' font-weight='800' font-style='italic' font-size='36' text-anchor='middle' fill='%23ff5a1f'%3EIG%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
 </script>
@@ -65,7 +71,18 @@
 
   <p class="swipe-hint" id="swipe-hint" aria-hidden="true"><span>‹</span> Swipe to change car <span>›</span></p>
   <nav class="selector" id="selector" aria-label="Choose a car"></nav>
-  <p class="hints" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd> choose <kbd>Enter</kbd> inspect <kbd>E</kbd> rev <kbd>H</kbd> horn</p>
+  <p class="hints" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd> choose <kbd>Enter</kbd> inspect <kbd>T</kbd> test drive <kbd>E</kbd> rev</p>
+
+  <div class="drive-hud" id="drive-hud" aria-hidden="true">
+    <div class="speedo"><b id="drive-speed">0</b><span>km/h</span></div>
+    <div class="run"><span>Cone run</span><b id="drive-cones">0 / 23</b><i id="drive-time">0.0 s</i><em id="drive-best"></em></div>
+    <p class="drive-keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> drive <kbd>Space</kbd> handbrake <kbd>H</kbd> horn <kbd>R</kbd> reset <kbd>Esc</kbd> park</p>
+    <div class="drive-actions"><button class="btn" data-act="reset"><span>Reset</span></button><button class="btn primary" data-act="park"><span>Park it</span></button></div>
+    <div class="pad">
+      <div><button data-pad="left" aria-label="Steer left">‹</button><button data-pad="right" aria-label="Steer right">›</button></div>
+      <div><button data-pad="brake">Brake</button><button data-pad="gas">Gas</button></div>
+    </div>
+  </div>
 
   <aside class="drawer" id="drawer" aria-hidden="true">
     <button class="drawer-close" data-act="back"><span>←</span> Back to the garage <kbd>Esc</kbd></button>

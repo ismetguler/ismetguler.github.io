@@ -161,6 +161,47 @@ body.classic { overflow: auto; }
 .hints kbd:not(:first-child):not(:nth-child(2)) { margin-left: 10px; }
 .swipe-hint { display: none; }
 
+/* ---------- live GitHub block ---------- */
+.gh[hidden] { display: none; }
+.gh .sheet { margin-bottom: 14px; }
+.gh a { text-decoration: none; }
+.gh a:hover strong { color: var(--accent); }
+.gh .rows li:first-child { border-top: 0; }
+#classic .gh h3 { margin: clamp(56px, 9vw, 96px) 0 20px; display: flex; align-items: center; gap: 14px; font: 500 12px/1 var(--f-m); letter-spacing: 0.2em; text-transform: uppercase; color: var(--mute); }
+#classic .gh h3::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* ---------- share card (?og) ---------- */
+body.og .hud, body.og .intro-line, body.og #loader { display: none; }
+body.og .vignette { background: linear-gradient(90deg, rgba(5, 6, 8, 0.94), rgba(5, 6, 8, 0.72) 34%, transparent 62%), linear-gradient(180deg, rgba(5, 6, 8, 0.5), transparent 30%, transparent 70%, rgba(5, 6, 8, 0.75)); }
+.og-card { position: fixed; left: 6vw; top: 50%; transform: translateY(-50%); display: grid; justify-items: start; gap: 0; max-width: 54vw; }
+.og-card .mark { min-width: 5vw; height: 3.6vw; margin-bottom: 2.4vw; }
+.og-card .mark b { font-size: 2.6vw; }
+.og-card h2 { font: 800 italic 9.4vw/0.84 var(--f-d); text-transform: uppercase; letter-spacing: -0.012em; }
+.og-card p { margin-top: 1.5vw; font: 500 1.5vw/1 var(--f-m); letter-spacing: 0.2em; text-transform: uppercase; color: var(--soft); }
+.og-card em { margin-top: 2.6vw; font: 800 italic 3.9vw/0.9 var(--f-d); text-transform: uppercase; }
+.og-card em i { color: var(--accent); }
+.og-card small { margin-top: 3vw; padding-top: 1.2vw; border-top: 2px solid var(--accent); font: 500 1.35vw/1 var(--f-m); letter-spacing: 0.12em; color: var(--ink); }
+
+/* ---------- test drive ---------- */
+.drive-hud { position: absolute; inset: 0; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.5s, visibility 0.5s; }
+.drive-hud > * { pointer-events: auto; }
+body.driving .drive-hud { opacity: 1; visibility: visible; }
+body.driving .car-info, body.driving .spec, body.driving .selector, body.driving .hints, body.driving .swipe-hint, body.driving .nav, body.driving .avail, body.driving .menu-btn { opacity: 0; visibility: hidden; pointer-events: none; }
+body.driving .vignette { background: radial-gradient(120% 95% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%), linear-gradient(180deg, rgba(5, 6, 8, 0.55), transparent 16%, transparent 70%, rgba(5, 6, 8, 0.7)); }
+.car-info, .spec, .selector, .hints, .nav, .avail { transition: opacity 0.4s, visibility 0.4s, transform 0.5s var(--ease); }
+.speedo { position: absolute; left: var(--pad); bottom: clamp(20px, 4vh, 40px); display: flex; align-items: baseline; gap: 10px; }
+.speedo b { font: 800 italic clamp(72px, 9vw, 148px)/0.8 var(--f-d); font-variant-numeric: tabular-nums; min-width: 1.5ch; text-shadow: 0 2px 30px rgba(0, 0, 0, 0.6); }
+.speedo span, .run span { font: 500 12px/1 var(--f-m); letter-spacing: 0.2em; text-transform: uppercase; color: var(--mute); }
+.run { position: absolute; right: var(--pad); bottom: clamp(20px, 4vh, 40px); display: grid; justify-items: end; gap: 6px; text-align: right; }
+.run b { font: 800 italic 46px/0.9 var(--f-d); font-variant-numeric: tabular-nums; color: var(--car); }
+.run i { font: 500 15px/1 var(--f-m); font-style: normal; font-variant-numeric: tabular-nums; }
+.run em { font: 400 11px/1.3 var(--f-m); font-style: normal; letter-spacing: 0.08em; text-transform: uppercase; color: var(--soft); }
+.drive-keys { position: absolute; left: 50%; bottom: clamp(22px, 3.6vh, 40px); transform: translateX(-50%); display: flex; align-items: center; gap: 6px; white-space: nowrap; font: 400 11px/1 var(--f-m); letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
+.drive-keys kbd:nth-of-type(n + 5) { margin-left: 10px; }
+.drive-actions { position: absolute; top: calc(var(--pad) * 0.72 + 2px); right: calc(var(--pad) + 150px); display: flex; gap: 12px; }
+.drive-actions .btn { padding: 11px 18px 10px; font-size: 15px; }
+.pad { display: none; }
+
 /* ---------- drawer ---------- */
 .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); z-index: 4; display: flex; flex-direction: column; padding: 92px 0 0; background: linear-gradient(90deg, rgba(7, 8, 10, 0.86), rgba(7, 8, 10, 0.95)); border-left: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transform: translateX(102%); transition: transform 0.7s var(--ease); visibility: hidden; }
 body.drawer-open .drawer { transform: none; visibility: visible; }
@@ -241,7 +282,11 @@ body.drawer-open .hints { opacity: 0; }
 /* ---------- small screens ---------- */
 @media (max-width: 860px) {
   :root { --safe-b: env(safe-area-inset-bottom, 0px); }
-  .brand-txt em, .hints, .spec { display: none; }
+  .brand-txt em, .hints, .spec, .drive-keys { display: none; }
+  .drive-actions { top: 150px; right: var(--pad); }
+  .speedo, .run { top: 84px; bottom: auto; }
+  .speedo b { font-size: 64px; }
+  .run b { font-size: 34px; }
   .mark { min-width: 42px; height: 32px; }
   .mark b { font-size: 22px; }
   .menu-btn { display: grid; align-content: center; }
@@ -283,6 +328,22 @@ body.drawer-open .hints { opacity: 0; }
   .id-card dd { font-size: 15px; }
   body.drawer-open .selector, body.drawer-open .swipe-hint { opacity: 0; pointer-events: none; }
   #classic header .btn { font-size: 14px; padding: 11px 14px 10px; }
+}
+
+/* Touch devices drive with on-screen pedals. */
+@media (pointer: coarse) {
+  .drive-keys { display: none; }
+  .pad { position: absolute; left: 0; right: 0; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: space-between; padding: 0 var(--pad); pointer-events: none; }
+  .pad > div { display: flex; gap: 10px; pointer-events: auto; }
+  .pad button { width: 74px; height: 74px; border: 1px solid rgba(244, 241, 234, 0.35); background: rgba(5, 6, 8, 0.55); font: 700 15px/1 var(--f-d); letter-spacing: 0.1em; text-transform: uppercase; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .pad button[data-pad="left"], .pad button[data-pad="right"] { font-size: 40px; padding-bottom: 6px; }
+  .pad button[data-pad="gas"] { background: rgba(244, 241, 234, 0.9); color: #08090a; }
+  .pad button.on { background: var(--accent); border-color: var(--accent); color: #08090a; }
+  .speedo { top: 84px; bottom: auto; }
+  .speedo b { font-size: 64px; }
+  .run { top: 84px; bottom: auto; }
+  .run b { font-size: 34px; }
+  .drive-actions { top: 150px; right: var(--pad); }
 }
 
 /* Touch devices get a one-time swipe cue instead of keyboard hints. */

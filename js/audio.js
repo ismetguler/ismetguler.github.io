@@ -15,7 +15,7 @@ const HORNS = {
 };
 
 export function createAudio() {
-  let ctx = null, master = null, noiseBuf = null, on = false, hum = null;
+  let ctx = null, master = null, noiseBuf = null, on = false, hum = null, loop = null;
 
   function ensure() {
     if (!ctx) {
@@ -102,6 +102,43 @@ export function createAudio() {
       env(g.gain, t, [[0, 0.0001], [0.05, 0.1], [1.25, 0.1], [1.4, 0.0001]]);
       const o = osc('square', 650, filter('lowpass', 2400, 0.7, g), t, t + 1.4);
       env(o.frequency, t, [[0, 640], [0.35, 1380], [0.7, 640], [1.05, 1380], [1.4, 640]]);
+    },
+    // Continuous engine while driving. rpm, throttle and skid are all 0..1.
+    driveUpdate(kind, rpm, throttle, skid) {
+      if (!on) { if (loop) api.driveStop(); return; }
+      if (!loop || loop.kind !== kind) {
+        api.driveStop();
+        const P = ENGINES[kind] || ENGINES.coupe, t = ctx.currentTime, out = gain(0), nodes = [], oscs = [];
+        const lp = filter('lowpass', 500, 1.2, out);
+        const voices = P.rocket ? [['sawtooth', 1, 0.5], ['square', 0.5, 0.4]] : P.electric ? [['sine', 1, 0.6], ['triangle', 2.01, 0.18]] : [['sawtooth', 1, 0.5], ['sawtooth', 1.007, 0.45], ['square', 0.5, 0.4]];
+        const into = P.electric ? lp : shaper(P.grit || 3, lp);
+        for (const [type, m, v] of voices) { const o = osc(type, 60, gain(v, into), t, t + 86400); oscs.push([o, m]); nodes.push(o); }
+        const roar = gain(0, out), rn = noise(); rn.connect(filter('lowpass', 1500, 0.6, roar)); rn.start(); nodes.push(rn);
+        const sk = gain(0), sn = noise(); sn.connect(filter('bandpass', 1900, 3.5, sk)); sn.start(); nodes.push(sn);
+        loop = { kind, out, lp, oscs, roar, sk, nodes, idle: P.rocket ? 40 : P.electric ? 150 : P.idle, peak: P.rocket ? 96 : P.electric ? 900 : P.peak, vol: P.vol * (P.rocket ? 0.8 : 0.62), rocket: !!P.rocket };
+      }
+      const t = ctx.currentTime, f = loop.idle + (loop.peak - loop.idle) * rpm;
+      for (const [o, m] of loop.oscs) o.frequency.setTargetAtTime(f * m, t, 0.06);
+      loop.lp.frequency.setTargetAtTime(f * (4.5 + 5 * throttle), t, 0.08);
+      loop.out.gain.setTargetAtTime(loop.vol * (0.4 + 0.45 * throttle + 0.15 * rpm), t, 0.09);
+      loop.roar.gain.setTargetAtTime(loop.rocket ? 0.15 + 0.9 * throttle : 0.03 + 0.04 * rpm, t, 0.1);
+      loop.sk.gain.setTargetAtTime(skid * 0.1, t, 0.05);
+    },
+    driveStop() {
+      if (!loop) return; const l = loop; loop = null;
+      l.out.gain.setTargetAtTime(0, ctx.currentTime, 0.12); l.sk.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+      setTimeout(() => l.nodes.forEach((n) => { try { n.stop(); } catch { /* already stopped */ } }), 700);
+    },
+    thump(v = 1) {
+      if (!on) return; const t = ctx.currentTime, g = gain(0);
+      env(g.gain, t, [[0, 0.4 * v], [0.22, 0.0001]]);
+      const o = osc('sine', 90, g, t, t + 0.24); env(o.frequency, t, [[0, 110], [0.2, 42]]);
+      const n = noise(); n.connect(filter('lowpass', 700, 0.7, g)); n.start(t); n.stop(t + 0.12);
+    },
+    tok() {
+      if (!on) return; const t = ctx.currentTime, g = gain(0);
+      env(g.gain, t, [[0, 0.16], [0.09, 0.0001]]);
+      const o = osc('triangle', 500, filter('bandpass', 700, 2, g), t, t + 0.1); env(o.frequency, t, [[0, 560 + Math.random() * 160], [0.09, 240]]);
     },
     horn(kind) {
       if (!on) return;
