@@ -1,7 +1,6 @@
 // The garage itself: floor, back wall, pillars, light fixtures, bay markings and props.
-import * as THREE from 'three';
-import { Reflector } from 'three/addons/objects/Reflector.js';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import * as THREE from './three.js';
+import { Reflector, RoundedBoxGeometry } from './addons.js';
 
 const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
 

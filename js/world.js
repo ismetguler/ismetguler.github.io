@@ -1,9 +1,6 @@
 // Scene, camera rig, lighting and the render loop.
-import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import * as THREE from './three.js';
+import { EffectComposer, RenderPass, UnrealBloomPass, OutputPass } from './addons.js';
 import { buildGarage, makeEnvironment } from './garage.js';
 import { buildCar, setCarEnvironment } from './cars.js';
 import { createDrive } from './drive.js';
@@ -72,7 +69,9 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
   const dust = new THREE.Points(dustGeo, dustMat); dust.frustumCulled = false; scene.add(dust);
 
   // Post-processing
-  const target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: lowEnd ? 2 : 4 });
+  // HDR buffers where the GPU can render to them; plain 8-bit otherwise (no bloom, but a picture).
+  const hdr = renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float');
+  const target = new THREE.WebGLRenderTarget(1, 1, { type: hdr ? THREE.HalfFloatType : THREE.UnsignedByteType, samples: lowEnd ? 0 : 4 });
   const composer = new EffectComposer(renderer, target);
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.34, 0.5, 1.5);
@@ -89,7 +88,7 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
 
   function resize() {
     S.W = canvas.clientWidth || innerWidth; S.H = canvas.clientHeight || innerHeight;
-    const pr = Math.min(devicePixelRatio || 1, S.pixelCap ?? (lowEnd ? 1.5 : 2));
+    const pr = Math.min(devicePixelRatio || 1, S.pixelCap ?? 2);
     renderer.setPixelRatio(pr); renderer.setSize(S.W, S.H, false);
     composer.setPixelRatio(pr); composer.setSize(S.W, S.H);
     camera.aspect = S.W / S.H;
@@ -202,7 +201,7 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
   }
 
   // Adaptive quality: drop the mirror and resolution if the first seconds run slow.
-  let probe = { frames: 0, time: 0, done: lowEnd };
+  let probe = { frames: 0, time: 0, done: false };
   let last = 0, raf = 0;
   function loop(ms) {
     raf = requestAnimationFrame(loop);
@@ -211,7 +210,7 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
       probe.frames++; probe.time += dt;
       if (probe.time > 2.5) {
         probe.done = true;
-        if (probe.time / probe.frames > 0.03) { garage.setReflect(false); S.pixelCap = 1.25; resize(); }
+        if (probe.time / probe.frames > 0.03) { garage.setReflect(false); S.pixelCap = lowEnd ? 1 : 1.25; resize(); }
       }
     }
     frame(dt, S.t);

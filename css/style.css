@@ -275,6 +275,8 @@ body.drawer-open .hints { opacity: 0; }
 #classic .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); margin-top: 34px; }
 #classic .skills { display: grid; gap: 18px; }
 #classic .skills h4 { font: 500 11px/1 var(--f-m); letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); margin-bottom: 8px; }
+#classic .notice { margin-bottom: 28px; padding: 12px 14px; border: 1px solid var(--line); border-left: 3px solid var(--accent); font: 400 13px/1.5 var(--f-b); color: var(--soft); }
+#classic .notice span { display: block; margin-top: 4px; font: 400 11px/1.4 var(--f-m); color: var(--mute); overflow-wrap: anywhere; }
 #classic footer { margin-top: 70px; font: 400 12px/1.5 var(--f-m); color: var(--mute); }
 .noscript { position: fixed; inset: 0; z-index: 99; display: grid; align-content: center; gap: 16px; padding: 10vw; background: var(--bg); }
 .noscript[hidden] { display: none; }

@@ -224,6 +224,7 @@ async function boot() {
     console.error('3D garage failed to start — showing the classic view.', err);
     body.classList.remove('booting', 'intro');
     body.classList.add('classic'); classic.hidden = false; window.__booted = true;
+    classic.insertAdjacentHTML('afterbegin', `<p class="notice">The 3D garage couldn’t start on this device, so here’s the classic view. <span>${String(err?.message || err).replace(/[<&]/g, '')}</span></p>`);
   }
 }
 

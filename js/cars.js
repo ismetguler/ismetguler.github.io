@@ -1,7 +1,7 @@
 // Procedural cars. Every body is a loft: rounded-rectangle cross-sections swept along the
 // car's length, with paint / glass / lamps assigned per quad. No model files.
-import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import * as THREE from './three.js';
+import { RoundedBoxGeometry } from './addons.js';
 
 // Cross-section topology (per half): bottom, bottom corner, side, top corner, top.
 const NB = 2, NC = 4, NS = 8, NT = 5, NE = 5;
@@ -155,13 +155,25 @@ function shared() {
   return SHARED;
 }
 
+// Rounded-rectangle path. ctx.roundRect is missing on older mobile browsers, so draw it by hand.
+// `r` is one radius or [top-left, top-right, bottom-right, bottom-left].
+function roundRect(g, x, y, w, h, r) {
+  const [a, b, c, d] = Array.isArray(r) ? r : [r, r, r, r];
+  g.beginPath();
+  g.moveTo(x + a, y); g.lineTo(x + w - b, y); g.quadraticCurveTo(x + w, y, x + w, y + b);
+  g.lineTo(x + w, y + h - c); g.quadraticCurveTo(x + w, y + h, x + w - c, y + h);
+  g.lineTo(x + d, y + h); g.quadraticCurveTo(x, y + h, x, y + h - d);
+  g.lineTo(x, y + a); g.quadraticCurveTo(x, y, x + a, y);
+  g.closePath();
+}
+
 function shadowTexture() {
   const c = document.createElement('canvas'); c.width = 256; c.height = 128;
   const g = c.getContext('2d');
   g.shadowColor = 'rgba(0,0,0,0.95)'; g.shadowBlur = 26; g.shadowOffsetX = 600;
   g.fillStyle = '#000';
-  g.beginPath(); g.roundRect(46 - 600, 34, 164, 60, 26); g.fill();
-  g.beginPath(); g.roundRect(60 - 600, 44, 136, 40, 18); g.fill();
+  roundRect(g, 46 - 600, 34, 164, 60, 26); g.fill();
+  roundRect(g, 60 - 600, 44, 136, 40, 18); g.fill();
   return new THREE.CanvasTexture(c);
 }
 
@@ -194,9 +206,9 @@ const FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
 
 function plateTexture(text) {
   return canvasTex(416, 92, (g, w, h) => {
-    g.fillStyle = '#f4f4f1'; g.beginPath(); g.roundRect(2, 2, w - 4, h - 4, 10); g.fill();
+    g.fillStyle = '#f4f4f1'; roundRect(g, 2, 2, w - 4, h - 4, 10); g.fill();
     g.lineWidth = 4; g.strokeStyle = '#111'; g.stroke();
-    g.fillStyle = '#1a3fa8'; g.beginPath(); g.roundRect(4, 4, 44, h - 8, [8, 0, 0, 8]); g.fill();
+    g.fillStyle = '#1a3fa8'; roundRect(g, 4, 4, 44, h - 8, [8, 0, 0, 8]); g.fill();
     g.fillStyle = '#fff'; g.font = `700 22px ${FONT}`; g.textAlign = 'center'; g.fillText('TR', 26, h - 14);
     g.fillStyle = '#111'; g.font = `700 68px ${FONT}`; g.textBaseline = 'middle';
     g.fillText(text, 48 + (w - 52) / 2, h / 2 + 4);
@@ -499,7 +511,7 @@ const SPECS = {
         both((s) => cyl(0.055, 0.055, 0.12, S.chrome, x0 - 0.03, 0.4, s * 0.34, 'x', 18));
         c.mirrors(0.72, 0.99, 0.84, m.paint); c.handles([-0.1], 0.82); c.doorLines([-0.84, 0.64], 0.26, 0.93);
         const tag = c.decal(0.36, 0.2, (g, w, h) => {
-          g.fillStyle = '#f6f2e6'; g.beginPath(); g.roundRect(4, 4, w - 8, h - 8, 14); g.fill();
+          g.fillStyle = '#f6f2e6'; roundRect(g, 4, 4, w - 8, h - 8, 14); g.fill();
           g.lineWidth = 8; g.strokeStyle = '#d0142a'; g.stroke();
           txt(g, 'SOLD', w / 2, h * 0.43, h * 0.56, '#d0142a', 800);
           txt(g, 'DELIVERED · 5.0★', w / 2, h * 0.8, h * 0.17, '#22201c', 700);

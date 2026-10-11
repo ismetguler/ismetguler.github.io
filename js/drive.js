@@ -1,8 +1,8 @@
 // Test drive: take the selected car out of its bay and around the garage floor.
 // Arcade physics on a flat plane — a bicycle model with lateral grip, plus cones, drums and
 // tyres that get knocked about.
-import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import * as THREE from './three.js';
+import { mergeGeometries } from './addons.js';
 
 const PROFILES = {
   truck: { acc: 6.5, top: 13, grip: 7.5, steer: 0.5 },
