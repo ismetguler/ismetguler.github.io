@@ -284,6 +284,12 @@ body.drawer-open .hints { opacity: 0; }
   .intro-line h2 { font-size: clamp(34px, 15vh, 70px); }
 }
 
+/* Small laptop windows: the spec sheet would sit on the car, so it lives in Inspect only. */
+@media (min-width: 861px) and (max-width: 1100px) {
+  .hints, .spec { display: none; }
+  .car-info { width: min(480px, 42vw); }
+}
+
 @media (max-height: 620px) and (min-width: 861px) {
   .car-name { font-size: clamp(44px, 12vh, 90px); }
   .car-tag { display: none; }
