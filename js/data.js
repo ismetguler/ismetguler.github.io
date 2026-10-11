@@ -8,9 +8,10 @@ export const PROFILE = {
   email: 'gulerrismet@gmail.com',
   linkedin: 'https://www.linkedin.com/in/ismet-g%C3%BCler-0b7ba8351/',
   github: 'https://github.com/IsmetGuler',
+  cv: { en: 'assets/cv/Ismet_Guler_CV_EN.pdf', tr: 'assets/cv/Ismet_Guler_CV_TR.pdf' },
   about: [
     'Computer Engineering student, full-stack & mobile developer. My apps are live on the App Store and Google Play, and the ERP I built runs an auto repair shop every single day — shipped fast, end to end, from idea to launch.',
-    'Alongside my degree at Erciyes University I work as a Student R&D Assistant at the university’s Computer Research Center and write avionics software for a TEKNOFEST rocket team — so I’m comfortable everywhere from Firebase backends to bare-metal STM32 firmware.',
+    'Alongside my degree at Erciyes University I’ve worked as a Student R&D Assistant at the university’s Computer Research Center and written avionics software for a TEKNOFEST rocket team — so I’m comfortable everywhere from Firebase backends to bare-metal STM32 firmware.',
     'I speak English at a B2 level and work entirely remotely. If you need someone reliable who delivers and communicates clearly, that’s me.',
   ],
   facts: [
@@ -101,9 +102,9 @@ export const PROJECTS = [
 
 export const EXPERIENCE = [
   ['Computer Engineering — 3rd year', 'Erciyes University', '2023 – present · GPA 3.19 / 4.00', 'Core CS, algorithms, and software engineering. Building a portfolio of shipped apps alongside coursework.'],
-  ['Student R&D Assistant', 'Erciyes University — Computer Research Center (BAUM)', 'Oct 2025 – present', 'Prototyping mobile solutions for university systems and optimizing backend-to-mobile data flow with senior engineers.'],
-  ['Avionics Software Developer', 'TEKNOFEST Rocket Competition — Arfesa Team', 'Sep 2025 – present', 'Real-time STM32 flight software: Kalman filtering, sensor fusion, and fail-safe recovery logic.'],
-  ['IT Department (İŞKUR)', 'Erciyes University', '2025 – present', 'Hands-on work supporting the university’s IT operations.'],
+  ['Freelance Full-Stack Developer', 'Oto Servis ERP — auto repair shop, Ankara', 'Aug 2026 – Sep 2026', 'Built and delivered a web-based ERP covering vehicle intake, work orders, inventory, accounts, invoicing and 30+ reports — gathered the requirements with the shop staff and ran the project end to end. In daily use since September 2026.'],
+  ['Student R&D Assistant', 'Erciyes University — Computer Research Center (BAUM) · İŞKUR student program', 'Nov 2025 – Jun 2026', 'Built a notification and information-management REST API for university systems, improving backend-to-mobile data flow, and worked with the technical team on the university’s IT infrastructure and support.'],
+  ['Avionics Software Developer', 'TEKNOFEST Rocket Competition — Arfesa Team', 'Sep 2025 – Jun 2026', 'Real-time STM32 flight software: Kalman filtering, sensor fusion, and fail-safe recovery logic.'],
 ];
 
 export const SKILLS = [

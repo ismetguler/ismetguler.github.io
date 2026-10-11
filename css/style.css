@@ -233,6 +233,8 @@ body.drawer-open .drawer { transform: none; visibility: visible; }
 .paint button { width: 30px; height: 30px; background: var(--c); border: 2px solid rgba(244, 241, 234, 0.22); transform: skewX(-12deg); transition: transform 0.2s, border-color 0.2s; }
 .paint button:hover { transform: skewX(-12deg) translateY(-2px); border-color: rgba(244, 241, 234, 0.7); }
 .paint button[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 2px #0a0b0d, 0 0 0 3px var(--ink); }
+.drawer .tip a { color: var(--soft); text-underline-offset: 3px; }
+.drawer .tip a:hover { color: var(--ink); }
 .drawer .tip { margin-top: 22px; font: 400 11px/1.4 var(--f-m); letter-spacing: 0.08em; text-transform: uppercase; color: var(--mute); }
 .rows { list-style: none; display: grid; }
 .rows li { padding: 16px 0; border-bottom: 1px solid var(--line); }

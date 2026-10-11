@@ -90,7 +90,8 @@ const PANELS = {
       <dl class="sheet">${PROFILE.facts.map(([v, l]) => `<div><dt>${esc(v)}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl>
       <h3>What I do</h3>
       <ul class="rows">${PROFILE.services.map(([t, d]) => `<li><strong>${esc(t)}</strong><p>${esc(d)}</p></li>`).join('')}</ul>
-      <div class="car-actions"><button class="btn primary" data-panel="contact"><span>Hire me</span></button></div>`;
+      <div class="car-actions"><button class="btn primary" data-panel="contact"><span>Hire me</span></button><a class="btn" href="${esc(PROFILE.cv.en)}" download><span>Download CV ↓</span></a></div>
+      <p class="tip"><a href="${esc(PROFILE.cv.tr)}" download>CV in Turkish ↓</a></p>`;
   },
   logbook() {
     return `
@@ -115,6 +116,8 @@ const PANELS = {
         <a href="mailto:${esc(PROFILE.email)}"><b>Email</b><span>${esc(PROFILE.email)}</span></a>
         <a href="${esc(PROFILE.linkedin)}" target="_blank" rel="noopener"><b>LinkedIn</b><span>in/ismet-güler ↗</span></a>
         <a href="${esc(PROFILE.github)}" target="_blank" rel="noopener"><b>GitHub</b><span>IsmetGuler ↗</span></a>
+        <a href="${esc(PROFILE.cv.en)}" download><b>CV</b><span>PDF · English ↓</span></a>
+        <a href="${esc(PROFILE.cv.tr)}" download><b lang="tr">Özgeçmiş</b><span>PDF · Türkçe ↓</span></a>
         <button data-act="copy-email"><b>Copy email</b><span id="copy-state">to clipboard</span></button>
       </div>`;
   },
@@ -214,6 +217,8 @@ export function buildClassic(root, on) {
         <a href="mailto:${esc(PROFILE.email)}"><b>Email</b><span>${esc(PROFILE.email)}</span></a>
         <a href="${esc(PROFILE.linkedin)}" target="_blank" rel="noopener"><b>LinkedIn</b><span>in/ismet-güler ↗</span></a>
         <a href="${esc(PROFILE.github)}" target="_blank" rel="noopener"><b>GitHub</b><span>IsmetGuler ↗</span></a>
+        <a href="${esc(PROFILE.cv.en)}" download><b>CV</b><span>PDF · English ↓</span></a>
+        <a href="${esc(PROFILE.cv.tr)}" download><b lang="tr">Özgeçmiş</b><span>PDF · Türkçe ↓</span></a>
       </div>
     </section>
     <footer>© ${esc(PROFILE.name)} · built remotely from Türkiye</footer>`;
