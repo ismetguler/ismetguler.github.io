@@ -6,7 +6,7 @@
 <rect width="1200" height="750" fill="url(#bg2)"/>
 <circle cx="950" cy="600" r="230" fill="#19d3da" opacity="0.13"/>
 <text x="80" y="140" fill="#fff" font-size="60" font-weight="800">Şehir Ustası</text>
-<text x="82" y="192" fill="#9fb0d0" font-size="30">Türkiye geography game · 900+ users</text>
+<text x="82" y="192" fill="#9fb0d0" font-size="30">Türkiye geography game · 1,000+ installs</text>
 <g transform="translate(80,232)">
 <rect width="150" height="58" rx="14" fill="url(#ac2)"/><text x="75" y="38" fill="#06070d" font-size="23" font-weight="700" text-anchor="middle">Kotlin</text>
 <rect x="170" width="180" height="58" rx="14" fill="none" stroke="#2a3a5a" stroke-width="2"/><text x="260" y="38" fill="#cdd7ee" font-size="23" text-anchor="middle">Firebase</text>
