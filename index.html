@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 <script type="importmap">
 { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
 </script>
@@ -48,6 +48,7 @@
       <span class="mark"><b>IG</b></span>
       <span class="brand-txt"><strong>İsmet Güler</strong><em>Full-stack &amp; mobile developer</em></span>
     </a>
+    <p class="avail"><i></i>Available for remote work</p>
     <nav class="nav" aria-label="Sections">
       <button data-panel="driver">Driver</button>
       <button data-panel="logbook">Logbook</button>
@@ -55,6 +56,7 @@
       <button data-act="classic">Classic view</button>
       <button data-panel="contact" class="cta"><span>Hire me</span></button>
     </nav>
+    <button class="sound" data-act="sound" aria-pressed="false" aria-label="Sound"><i class="eq"><b></b><b></b><b></b><b></b></i><span>Sound off</span></button>
     <button class="menu-btn" data-act="menu" aria-label="Menu"><span></span><span></span></button>
   </header>
 
@@ -63,7 +65,7 @@
 
   <p class="swipe-hint" id="swipe-hint" aria-hidden="true"><span>‹</span> Swipe to change car <span>›</span></p>
   <nav class="selector" id="selector" aria-label="Choose a car"></nav>
-  <p class="hints" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd> choose <kbd>Enter</kbd> inspect <kbd>Esc</kbd> back</p>
+  <p class="hints" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd> choose <kbd>Enter</kbd> inspect <kbd>E</kbd> rev <kbd>H</kbd> horn</p>
 
   <aside class="drawer" id="drawer" aria-hidden="true">
     <button class="drawer-close" data-act="back"><span>←</span> Back to the garage <kbd>Esc</kbd></button>
@@ -72,6 +74,18 @@
 </div>
 
 <main id="classic" hidden></main>
+
+<!-- Shown only if the scripts fail before the page is up, so a visitor never gets a blank screen. -->
+<div class="noscript" id="fallback" hidden>
+  <h1>İsmet Güler — Full-stack &amp; mobile developer</h1>
+  <p>I build apps that people actually use. Something went wrong loading this page — please refresh, or reach me at <a href="mailto:gulerrismet@gmail.com">gulerrismet@gmail.com</a> · <a href="https://github.com/IsmetGuler">GitHub</a> · <a href="https://www.linkedin.com/in/ismet-g%C3%BCler-0b7ba8351/">LinkedIn</a>.</p>
+</div>
+<script>
+addEventListener('error', function (e) {
+  var t = e.target;
+  if (!window.__booted && (!t || t === window || t.tagName === 'SCRIPT')) document.getElementById('fallback').hidden = false;
+}, true);
+</script>
 
 <noscript>
   <div class="noscript">

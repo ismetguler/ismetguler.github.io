@@ -16,8 +16,11 @@ function titleHTML(name) {
 const chips = (list) => `<ul class="chips">${list.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>`;
 const linkBtn = (p, cls = '') => `<a class="btn ${cls}" href="${esc(p.link[1])}" target="_blank" rel="noopener"><span>${esc(p.link[0])} ↗</span></a>`;
 
+let soundOn = false;
+const soundBtn = () => `<button class="sound" data-act="sound" aria-pressed="${soundOn}" aria-label="Sound"><i class="eq"><b></b><b></b><b></b><b></b></i><span>Sound ${soundOn ? 'on' : 'off'}</span></button>`;
+
 const PANELS = {
-  project(i) {
+  project(i, x) {
     const p = PROJECTS[i];
     return `
       <p class="eyebrow">Bay ${no(i)} · ${esc(p.model)} · ${esc(p.plate)}</p>
@@ -28,7 +31,14 @@ const PANELS = {
       <dl class="sheet">${p.specs.map(([v, l]) => `<div><dt>${esc(v)}</dt><dd>${esc(l)}</dd></div>`).join('')}</dl>
       <h3>Under the hood</h3>
       ${chips(p.stack)}
-      <div class="car-actions">${linkBtn(p, 'primary')}</div>
+      <h3>Try it</h3>
+      <div class="try">
+        <button class="btn" data-act="rev"><span>${esc(p.rev || 'Rev engine')} <kbd>E</kbd></span></button>
+        <button class="btn" data-act="horn"><span>${esc(p.horn || 'Horn')} <kbd>H</kbd></span></button>
+        ${soundBtn()}
+      </div>
+      <div class="paint" role="group" aria-label="Paint"><span>Paint</span>${x.paints.map((c, k) => `<button data-paint="${c}" style="--c:${c}" aria-pressed="${c === x.paint}" aria-label="${k ? `Repaint ${c}` : 'Factory paint'}"></button>`).join('')}</div>
+      <div class="car-actions">${linkBtn(p, 'primary')}<button class="btn" data-act="share"><span id="share-state">Copy link</span></button></div>
       <p class="tip">Drag the car to spin it · ← → for the next bay</p>`;
   },
   driver() {
@@ -40,6 +50,7 @@ const PANELS = {
         <dt>Base</dt><dd>${esc(PROFILE.location)} · remote, worldwide</dd>
         <dt>School</dt><dd>Erciyes University · Computer Engineering</dd>
         <dt>English</dt><dd>B2</dd>
+        <dt>Status</dt><dd>Available for remote work</dd>
       </dl>
       ${PROFILE.about.map((t) => `<p>${esc(t)}</p>`).join('')}
       <h3>By the numbers</h3>
@@ -81,13 +92,15 @@ export function createHud(on) {
   selector.innerHTML = `${arrow('prev')}<ol>${PROJECTS.map((p, i) => `<li><button data-car="${i}" aria-label="Bay ${no(i)}: ${esc(p.name)}">${no(i)}<span${lang(p)}>${esc(p.name)}</span></button></li>`).join('')}</ol>${arrow('next')}`;
 
   document.addEventListener('click', (e) => {
-    const t = e.target.closest('[data-act],[data-panel],[data-car]');
+    const t = e.target.closest('[data-act],[data-panel],[data-car],[data-paint]');
     if (!t) return;
     if (t.dataset.car !== undefined) return on.select(+t.dataset.car);
     if (t.dataset.panel) { document.body.classList.remove('menu-open'); return on.panel(t.dataset.panel); }
+    if (t.dataset.paint) { body.querySelectorAll('[data-paint]').forEach((b) => b.setAttribute('aria-pressed', b === t)); return on.paint(t.dataset.paint); }
     const act = t.dataset.act;
     if (act === 'home') e.preventDefault();
     if (act === 'menu') return document.body.classList.toggle('menu-open');
+    if (act === 'sound' || act === 'rev' || act === 'horn' || act === 'share') return on[act]();
     if (act === 'copy-email') return navigator.clipboard?.writeText(PROFILE.email).then(() => { const s = $('#copy-state'); if (s) s.textContent = 'copied ✓'; });
     document.body.classList.remove('menu-open');
     on[act]?.();
@@ -111,12 +124,16 @@ export function createHud(on) {
       selector.querySelector('[data-act=next]').disabled = i === PROJECTS.length - 1;
     },
     openDrawer(kind, i) {
-      body.innerHTML = PANELS[kind](i);
+      body.innerHTML = PANELS[kind](i, kind === 'project' ? on.paints(i) : null);
       stagger(body); replay(body); body.scrollTop = 0;
       drawer.setAttribute('aria-hidden', 'false');
       document.body.classList.add('drawer-open');
       document.querySelectorAll('.nav [data-panel]').forEach((b) => b.classList.toggle('on', b.dataset.panel === kind));
       return drawer.getBoundingClientRect();
+    },
+    setSound(v) {
+      soundOn = v;
+      document.querySelectorAll('.sound').forEach((b) => { b.setAttribute('aria-pressed', v); b.querySelector('span').textContent = `Sound ${v ? 'on' : 'off'}`; });
     },
     closeDrawer() {
       drawer.setAttribute('aria-hidden', 'true');

@@ -59,7 +59,7 @@ export const PROJECTS = [
   },
   {
     id: 'lie-detector-ai', car: 'police', color: '#5aa2ff', plate: '38 LD 004',
-    name: 'Lie Detector AI', model: 'Interceptor',
+    name: 'Lie Detector AI', model: 'Interceptor', horn: 'Siren',
     status: 'AI · computer vision · on Google Play',
     tag: 'Real-time face tracking and sensor fusion. Nothing gets past this one.',
     desc: 'An interactive biometric experience using Google ML Kit for real-time face tracking and micro-expression detection, fused with accelerometer and PPG sensor signals into a multi-layer analysis algorithm.',
@@ -79,7 +79,7 @@ export const PROJECTS = [
   },
   {
     id: 'rocket-avionics', car: 'rocket', color: '#ff6a1f', plate: '38 RKT 006',
-    name: 'Rocket Avionics', model: 'Streamliner',
+    name: 'Rocket Avionics', model: 'Streamliner', rev: 'Ignite', horn: 'Burst',
     status: 'Embedded · TEKNOFEST rocket team',
     tag: 'Flight software for a real rocket. The only one here that leaves the ground.',
     desc: 'Real-time flight software on STM32 for a TEKNOFEST rocket team. Implemented Kalman filtering for altitude estimation (~25% sensor-noise reduction) and fail-safe parachute-deployment logic over SPI / I²C with multi-sensor fusion.',
@@ -89,7 +89,7 @@ export const PROJECTS = [
   },
   {
     id: 'notification-api', car: 'van', color: '#19c6b3', plate: '38 API 007',
-    name: 'Notification API', model: 'Signal van',
+    name: 'Notification API', model: 'Signal van', rev: 'Send a ping',
     status: 'Backend · university R&D',
     tag: 'Delivers every message from the university’s backend to its mobile apps.',
     desc: 'A notification & information-management API built during R&D work at Erciyes University’s Computer Research Center (BAUM), optimizing backend-to-mobile data flow for university systems.',

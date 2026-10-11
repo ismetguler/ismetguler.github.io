@@ -149,6 +149,8 @@ function shared() {
     caliper: new THREE.MeshStandardMaterial({ color: 0xd61f26, roughness: 0.5, metalness: 0.3 }),
     rubber: new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.9 }),
     shadowTex: shadowTexture(),
+    spillTex: spillTexture(),
+    beamGeo: beamGeometry(),
   };
   return SHARED;
 }
@@ -161,6 +163,23 @@ function shadowTexture() {
   g.beginPath(); g.roundRect(46 - 600, 34, 164, 60, 26); g.fill();
   g.beginPath(); g.roundRect(60 - 600, 44, 136, 40, 18); g.fill();
   return new THREE.CanvasTexture(c);
+}
+
+function spillTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.5, 'rgba(255,255,255,0.3)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  return new THREE.CanvasTexture(c);
+}
+
+// A headlight beam: a cone that starts bright at the lamp and fades to nothing.
+function beamGeometry() {
+  const len = 5.2, geo = new THREE.ConeGeometry(1.0, len, 24, 8, true).rotateZ(Math.PI / 2).translate(len / 2, 0, 0);
+  const pos = geo.attributes.position, col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) { const k = Math.pow(Math.max(0, 1 - pos.getX(i) / len), 2.2); col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = k; }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return geo;
 }
 
 function canvasTex(w, h, draw) {
@@ -297,6 +316,26 @@ function assemble(spec, info) {
   const sh = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0 + 1.5, half(0) * 2 + 1.5), new THREE.MeshBasicMaterial({ map: S.shadowTex, transparent: true, opacity: 0.92, depthWrite: false, color: 0x000000 }));
   sh.rotation.x = -Math.PI / 2; sh.position.set((x0 + x1) / 2, 0.012, 0); sh.renderOrder = 4; sh.userData.fx = true; g.add(sh);
 
+  // Headlight beams and their spill on the floor
+  // Soft volumetric look: the cone fades along its length and towards its silhouette.
+  const beamMat = new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(col.head ?? 0xeaf2ff) }, uOpacity: { value: 0 } },
+    vertexShader: 'attribute vec3 color; varying float vK; varying vec3 vN; varying vec3 vV; void main() { vK = color.r; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalMatrix * normal; vV = -mv.xyz; gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'uniform vec3 uColor; uniform float uOpacity; varying float vK; varying vec3 vN; varying vec3 vV; void main() { float edge = pow(abs(dot(normalize(vN), normalize(vV))), 2.4); gl_FragColor = vec4(uColor, vK * edge * uOpacity); }',
+    transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+  });
+  const spillMat = new THREE.MeshBasicMaterial({ color: col.head ?? 0xeaf2ff, map: S.spillTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false });
+  if (spec.beam) {
+    const [by, bz] = spec.beam;
+    for (const s of [1, -1]) {
+      const beam = new THREE.Mesh(S.beamGeo, beamMat);
+      beam.position.set(x1 - 0.02, by, s * bz); beam.rotation.set(0, s * -0.05, -by / 6.5); beam.scale.set(1, 1, 0.9);
+      beam.userData.fx = true; beam.renderOrder = 9; g.add(beam);
+    }
+    const spill = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 3.6), spillMat);
+    spill.rotation.x = -Math.PI / 2; spill.position.set(x1 + 2.5, 0.013, 0); spill.renderOrder = 5; spill.userData.fx = true; g.add(spill);
+  }
+
   // Helpers for per-car details
   const add = (mesh, x, y, z) => { mesh.position.set(x, y, z); g.add(mesh); return mesh; };
   const box = (sx, sy, sz, mat, x, y, z, r = 0.015) => add(new THREE.Mesh(new RoundedBoxGeometry(sx, sy, sz, 2, Math.min(r, sx / 2.01, sy / 2.01, sz / 2.01)), mat), x, y, z);
@@ -330,17 +369,30 @@ function assemble(spec, info) {
 
   g.traverse((o) => { if (o.isMesh && !o.userData.fx) o.castShadow = true; });
 
-  let power = 0;
+  const REV = 1.8;
+  let power = 0, revT = 0, flashT = 0;
   return {
     group: g,
     size: { length: x1 - x0, x0, x1, width: half(0) * 2, height: C ? Math.max(...C.roof.map((p) => p[1])) : Math.max(...B.deck.map((p) => p[1])) },
-    setPower(p) {
-      power = p;
-      m.head.emissiveIntensity = 0.05 + 5 * p;
-      m.tail.emissiveIntensity = 0.25 + 3.2 * p;
-      m.amber.emissiveIntensity = 0.1 + 1.6 * p;
+    factoryPaint: `#${new THREE.Color(col.paint).getHexString()}`,
+    setPower(p) { power = p; },
+    setPaint(hex) { m.paint.color.set(hex); m.paint.userData.lip?.color.set(hex); },
+    rev() { revT = REV; },
+    flash() { flashT = 0.56; },
+    update(t, dt = 0.016) {
+      revT = Math.max(0, revT - dt); flashT = Math.max(0, flashT - dt);
+      // Rev envelope: quick rise, hold, fall away.
+      const rv = revT > 0 ? Math.min(1, (REV - revT) / 0.3) * Math.min(1, revT / 0.7) : 0;
+      const fl = flashT > 0 && flashT % 0.28 > 0.1 ? 1 : 0;
+      m.head.emissiveIntensity = 0.05 + 5 * power + 3 * rv * power + 7 * fl;
+      m.tail.emissiveIntensity = 0.25 + 3.2 * power + 3 * rv * power;
+      m.amber.emissiveIntensity = 0.1 + 1.6 * power + 6 * fl;
+      beamMat.uniforms.uOpacity.value = 0.3 * power + 0.2 * rv * power + 0.3 * fl;
+      spillMat.opacity = 0.16 * power + 0.1 * rv * power + 0.2 * fl;
+      g.position.y = rv * 0.011 * Math.sin(t * 74);
+      g.rotation.x = rv * 0.007 * Math.sin(t * 57);
+      tick?.(t, power * (1 + 0.9 * rv));
     },
-    update(t) { tick?.(t, power); },
   };
 }
 
@@ -357,6 +409,7 @@ const SPECS = {
     return {
       x0, x1,
       wheel: { r: 0.415, w: 0.29, xF: 1.7, xR: -1.5, gap: 0.085, style: 'steel', lipBlack: true, lip: 0.04 },
+      beam: [0.9, 0.7],
       body: {
         bottom: [[x0, 0.7], [x0 + 0.1, 0.5], [x0 + 0.32, 0.42], [x1 - 0.42, 0.42], [x1 - 0.1, 0.5], [x1, 0.68]],
         deck: [[x0, 1.04], [x0 + 0.06, 1.12], [-0.52, 1.12], [-0.42, 1.15], [1.0, 1.15], [1.2, 1.17], [2.3, 1.12], [x1 - 0.1, 1.06], [x1, 0.98]],
@@ -409,6 +462,7 @@ const SPECS = {
     return {
       x0, x1,
       wheel: { r: 0.35, w: 0.28, xF: 1.4, xR: -1.3, gap: 0.05, style: 'black' },
+      beam: [0.6, 0.66],
       body: {
         bottom: [[x0, 0.52], [x0 + 0.1, 0.27], [x0 + 0.36, 0.2], [1.95, 0.17], [x1 - 0.1, 0.2], [x1, 0.34]],
         deck: [[x0, 0.82], [x0 + 0.06, 0.93], [-1.7, 0.97], [-0.6, 0.98], [0.5, 0.95], [1.35, 0.85], [2.0, 0.68], [x1 - 0.06, 0.56], [x1, 0.47]],
@@ -455,6 +509,7 @@ const SPECS = {
     return {
       x0, x1,
       wheel: { r: 0.43, w: 0.3, xF: 1.4, xR: -1.34, gap: 0.09, style: 'steel', lipBlack: true, lip: 0.05, lipInset: 0.0 },
+      beam: [0.97, 0.7],
       body: {
         bottom: [[x0, 0.74], [x0 + 0.1, 0.52], [x0 + 0.3, 0.46], [x1 - 0.3, 0.46], [x1 - 0.1, 0.52], [x1, 0.72]],
         deck: [[x0, 1.1], [x0 + 0.05, 1.16], [1.02, 1.18], [1.15, 1.2], [2.08, 1.17], [x1 - 0.06, 1.12], [x1, 1.04]],
@@ -503,6 +558,7 @@ const SPECS = {
     return {
       x0, x1,
       wheel: { r: 0.355, w: 0.26, xF: 1.52, xR: -1.42, gap: 0.06, style: 'steel' },
+      beam: [0.56, 0.5],
       body: {
         bottom: [[x0, 0.54], [x0 + 0.1, 0.31], [x0 + 0.34, 0.24], [2.1, 0.22], [x1 - 0.08, 0.27], [x1, 0.42]],
         deck: [[x0, 0.88], [x0 + 0.05, 0.96], [-1.5, 1.0], [-0.9, 1.01], [0.8, 1.0], [1.45, 0.94], [2.2, 0.83], [x1 - 0.05, 0.74], [x1, 0.64]],
@@ -553,6 +609,7 @@ const SPECS = {
     return {
       x0, x1,
       wheel: { r: 0.335, w: 0.24, xF: 1.24, xR: -1.18, gap: 0.055, style: 'black' },
+      beam: [0.55, 0.44],
       body: {
         bottom: [[x0, 0.52], [x0 + 0.1, 0.28], [x0 + 0.32, 0.21], [1.7, 0.2], [x1 - 0.08, 0.25], [x1, 0.42]],
         deck: [[x0, 0.94], [x0 + 0.05, 1.02], [-1.0, 1.03], [0.6, 1.01], [1.12, 0.96], [1.75, 0.85], [x1 - 0.05, 0.75], [x1, 0.64]],
@@ -591,6 +648,7 @@ const SPECS = {
     return {
       x0, x1, stations: 110,
       wheel: { r: 0.3, w: 0.17, xF: 1.95, xR: -1.9, gap: 0.045, style: 'steel' },
+      beam: [0.56, 0.14],
       body: {
         bottom: [[x0, 0.4], [x0 + 0.3, 0.24], [x0 + 0.8, 0.17], [2.2, 0.15], [2.9, 0.24], [x1, 0.42]],
         deck: [[x0, 1.02], [x0 + 0.2, 1.06], [-1.4, 1.06], [0.2, 0.98], [1.7, 0.84], [2.6, 0.7], [3.2, 0.58], [x1, 0.5]],
@@ -644,6 +702,7 @@ const SPECS = {
     return {
       x0, x1,
       wheel: { r: 0.365, w: 0.26, xF: 1.56, xR: -1.46, gap: 0.065, style: 'steel', lipBlack: true },
+      beam: [0.75, 0.62],
       body: {
         bottom: [[x0, 0.62], [x0 + 0.08, 0.36], [x0 + 0.3, 0.3], [2.15, 0.3], [x1 - 0.08, 0.36], [x1, 0.56]],
         deck: [[x0, 1.06], [x0 + 0.04, 1.13], [1.5, 1.13], [1.66, 1.11], [2.3, 1.02], [x1 - 0.05, 0.94], [x1, 0.84]],

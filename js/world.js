@@ -61,6 +61,15 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
     await nextFrame();
   }
 
+  // Dust drifting through the light over the selected bay
+  const DUST = lowEnd ? 90 : 240, dustPos = new Float32Array(DUST * 3), dustVel = new Float32Array(DUST);
+  for (let i = 0; i < DUST; i++) { dustPos[i * 3] = (Math.random() - 0.5) * 6.4; dustPos[i * 3 + 1] = 0.15 + Math.random() * 3.9; dustPos[i * 3 + 2] = -2.6 + Math.random() * 6.2; dustVel[i] = 0.02 + Math.random() * 0.05; }
+  const dustGeo = new THREE.BufferGeometry(); dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+  const dotCanvas = document.createElement('canvas'); dotCanvas.width = dotCanvas.height = 32;
+  { const g = dotCanvas.getContext('2d'), gr = g.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, '#fff'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 32, 32); }
+  const dustMat = new THREE.PointsMaterial({ size: 0.045, map: new THREE.CanvasTexture(dotCanvas), color: 0xffe9cf, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const dust = new THREE.Points(dustGeo, dustMat); dust.frustumCulled = false; scene.add(dust);
+
   // Post-processing
   const target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: lowEnd ? 2 : 4 });
   const composer = new EffectComposer(renderer, target);
@@ -147,7 +156,7 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
         lv = on ? show : show * (1 - smooth(INTRO - 1.5, INTRO - 0.2, cine));
         S.levels[i] = on ? show : 0;
       }
-      cars[i].setPower(lv); cars[i].update(t);
+      cars[i].setPower(lv); cars[i].update(t, dt);
       holders[i].rotation.y = rig.yaw;
       b.pivot.rotation.y = i === S.sel ? S.spin : damp(b.pivot.rotation.y, 0, 5, dt);
       const tube = 0.35 * idle + 3.4 * lv; b.tubeMat.color.setRGB(tube, tube * 0.96, tube * 0.88);
@@ -158,6 +167,13 @@ export async function createWorld({ canvas, projects, onProgress, onSelect, onPi
     const sx = damp(spot.position.x, bays[S.sel].x, 6, dt);
     spot.position.set(sx + 0.4, 5.6, 2.6); spot.target.position.set(sx, 0.2, 0);
     spot.intensity = 125 * S.levels[S.sel] * fl;
+    for (let i = 0; i < DUST; i++) {
+      const j = i * 3;
+      dustPos[j + 1] -= dustVel[i] * dt; dustPos[j] += Math.sin(t * 0.3 + i) * 0.02 * dt;
+      if (dustPos[j + 1] < 0.1) dustPos[j + 1] = 4.05;
+    }
+    dustGeo.attributes.position.needsUpdate = true;
+    dust.position.x = sx; dustMat.opacity = 0.55 * S.levels[S.sel] * fl;
     rim.position.set(sx - 3.5, 3.6, -5.2); rim.target.position.set(sx, 0.9, 0); rim.intensity = 60 * S.levels[S.sel] * fl;
 
     composer.render(dt);
